@@ -78,7 +78,6 @@ func (cr *CsvReader) done(m message.Msg, proc pipeline.IProcessorForExecutor) {
 	proc.Done()
 }
 
-
 func (cr *CsvReader) ExecutorType() pipeline.ExecutorType {
 	return pipeline.SOURCE
 }
