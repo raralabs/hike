@@ -9,7 +9,6 @@ import (
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/core/transforms/do"
 	"github.com/raralabs/canal/core/transforms/event/poll"
 	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
@@ -44,29 +43,30 @@ func main() {
 	delay := p.AddTransform("Delay")
 	del := delay.AddProcessor(opts, doFn.DelayFunction(10*time.Millisecond), "path1")
 
-	ageFilter := func(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
+	ageFilt := func(m message.Msg) (bool, bool, error) {
+		match := false
 
 		content := m.Content()
 
 		if v, ok := content["eof"]; ok {
 			if v.Val == true {
-				proc.Result(m, content)
-				proc.Done()
-				return false
+				return false, true, nil
 			}
 		}
 
-		rawAge := content["age"].Val
-		if age, ok := cast.TryFloat(rawAge); ok {
-			if age > 30 && age < 50 {
-				proc.Result(m, content)
+		if rawAge, ok := content["age"]; ok {
+			if age, ok := cast.TryFloat(rawAge.Val); ok {
+				if age > 30 && age < 50 {
+					match = true
+				}
 			}
 		}
 
-		return false
+		return match, false, nil
 	}
+
 	filt := p.AddTransform("Age Filter")
-	f1 := filt.AddProcessor(opts, do.NewOperator(ageFilter), "path2")
+	f1 := filt.AddProcessor(opts, doFn.FilterFunction(ageFilt), "path2")
 
 	// Count Last Names
 	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
