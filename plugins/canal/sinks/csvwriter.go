@@ -3,8 +3,7 @@ package sinks
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
-	"os"
+	"io"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -17,15 +16,8 @@ type CsvWriter struct {
 	header      []string
 }
 
-func NewCsvWriter(path string) *CsvWriter {
-
-	// Create a file for writing
-	f, err := os.Create(path)
-	if err != nil {
-		log.Panicf("Couldn't open file for writing. Error: %v", err)
-	}
-
-	return &CsvWriter{name: "FileWriter", writer: csv.NewWriter(f), firstRecord: true}
+func NewCsvWriter(w io.Writer) *CsvWriter {
+	return &CsvWriter{name: "FileWriter", writer: csv.NewWriter(w), firstRecord: true}
 }
 
 func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {

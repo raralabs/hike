@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"io"
 	"log"
-	"os"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -18,14 +17,9 @@ type CsvReader struct {
 	header  []string
 }
 
-func NewCsvReader(path string, maxRows int) *CsvReader {
+func NewCsvReader(r io.Reader, maxRows int) *CsvReader {
 
-	buf, err := os.Open(path)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	csr := csv.NewReader(buf)
+	csr := csv.NewReader(r)
 	csr.TrimLeadingSpace = true
 
 	header, err := csr.Read()
