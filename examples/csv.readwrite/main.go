@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/raralabs/canal/core/pipeline"
-	"github.com/raralabs/canal/ext/transforms"
+	"github.com/raralabs/canal/ext/transforms/doFn"
+
 	csvsnk "github.com/raralabs/hike/plugins/canal/sinks"
 	csvsrc "github.com/raralabs/hike/plugins/canal/sources"
 )
@@ -22,14 +23,19 @@ func main() {
 	p := pipeline.NewPipeline(1)
 	opts := pipeline.DefaultProcessorOptions
 
+	file, err := os.Open(TmpPath + "records.csv")
+	if err != nil {
+		log.Panic(err)
+	}
+
 	src := p.AddSource("CSV Reader")
-	sp := src.AddProcessor(opts, csvsrc.NewCsvReader(TmpPath+"records.csv", -1))
+	sp := src.AddProcessor(opts, csvsrc.NewCsvReader(file, -1))
 
 	delay := p.AddTransform("Delay")
-	del := delay.AddProcessor(opts, transforms.DelayFunction(100*time.Millisecond), "path1")
+	del := delay.AddProcessor(opts, doFn.DelayFunction(100*time.Millisecond), "path1")
 
 	snk := p.AddSink("CSV Writer")
-	snk.AddProcessor(opts, csvsnk.NewCsvWriter(TmpPath+"newRecords.csv"), "sink")
+	snk.AddProcessor(opts, csvsnk.NewCsvWriter(os.Stdout), "sink")
 
 	delay.ReceiveFrom("path1", sp)
 	snk.ReceiveFrom("sink", del)
