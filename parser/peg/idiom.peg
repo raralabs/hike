@@ -1,0 +1,272 @@
+{
+package peg
+}
+
+Main <- agg:Job rest:(_ "|" _ Job)* {
+    jobs := []interface{}{agg}
+    rst := cast.ToIfaceSlice(rest)
+
+    for _, v := range rst {
+        rstJob := cast.ToIfaceSlice(v)
+        if len(rstJob) == 4 {
+            jobs = append(jobs, rstJob[3])
+        }
+    }
+
+    return jobs, nil
+}
+
+
+// Basic Grammar
+
+Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable / Number))* {
+        return string(c.text), nil
+}
+
+Value <- val:(Number / Word / String_Type1 / String_Type2) {
+        return val, nil
+}
+
+Variable <- Letter (Integer / Letter/ "_")* {
+        return string(c.text), nil
+}
+
+String_Type2 <- "'" w1:Word rest:( _ Word )* "'" {
+        var str strings.Builder
+
+        if w, ok := w1.(string); ok {
+
+                str.WriteString(w)
+                rst := cast.ToIfaceSlice(rest)
+
+                for _, v := range rst {
+                        rstStr := cast.ToIfaceSlice(v)
+                        if len(rstStr) == 2 {
+                                if wrd, ok := rstStr[1].(string); ok {
+                                        str.WriteString(" ")
+                                        str.WriteString(wrd)
+                                }
+                        }
+                }
+        }
+        s := str.String()
+
+        return cast.GetStringValue(s), nil
+}
+
+String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
+        c.text = bytes.Replace(c.text, []byte(`\/`), []byte(`/`), -1)
+        str,_ := strconv.Unquote(string(c.text))
+
+        return cast.GetStringValue(str), nil
+}
+
+EscapedChar <- [\x00-\x1f"\\]
+
+EscapeSequence <- SingleCharEscape
+
+SingleCharEscape <- ["\\/bfnrt]
+
+Word <- (Letter / "_")+ {
+        return string(c.text), nil
+}
+
+Letter <- [a-z] / [A-Z]
+
+Number <- '-'? Integer {
+        return strconv.ParseInt(string(c.text), 10, 64)
+}
+
+Integer <- '0' / NonZeroDecimalDigit DecimalDigit*
+
+DecimalDigit <- [0-9]
+
+NonZeroDecimalDigit <- [1-9]
+
+_ "whitespace" <- [ \t\r\n]*
+
+OneWhiteSpace <- [ \t\r\n]
+
+EOF <- !.
+
+// Jobs
+
+Job <- FileJobG / DoJobG / AggJobG / SinkJobG
+
+FileJobG <- _ "file(" _ filename:FileName _ ")" {
+    if fname, ok := cast.TryString(filename); ok {
+        return FileJob{Filename: fname}, nil
+    }
+    return nil, errors.New("could not decode source file name")
+}
+
+FileName <- name:Variable "." ext:Variable {
+    nm, _ := cast.TryString(name)
+    ex, _ := cast.TryString(ext)
+
+    return nm + "." + ex, nil
+}
+
+DoJobG <- job:(FilterDo / BranchDo) {
+        return DoNodeJob{Function: job}, nil
+}
+
+AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
+        jobSlices := cast.ToIfaceSlice(rest)
+        jobs := []interface{}{job}
+
+        for _, v := range jobSlices {
+                j := cast.ToIfaceSlice(v)
+                jobs = append(jobs, j[2])
+        }
+
+        ps, _ := params.([]string)
+
+        return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
+}
+
+AggJobs <- CountAgg / MaxAgg / MinAgg
+
+AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
+        p1, _ := cast.TryString(param)
+        params := []string{p1}
+
+        restSlice := cast.ToIfaceSlice(rest)
+        for _, v := range restSlice {
+                ps := cast.ToIfaceSlice(v)
+                p2, _ := cast.TryString(ps[2])
+                params = append(params, p2)
+        }
+
+        return params, nil
+}
+
+SinkJobG <- StdOutG / BlackHoleG
+
+StdOutG <- "stdout()" {
+        return SinkJob{Type: "stdout"}, nil
+}
+
+BlackHoleG <- "blackhole()" {
+        return SinkJob{Type: "blackhole"}, nil
+}
+
+
+// Filter Grammar
+
+FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
+        if f, ok := filt.(Filter); ok {
+                return f, nil
+        }
+        return nil, errors.New("Could not parse filter")
+}
+
+// A FilterMulti defines a filter that consists of either a single factor or
+// multiple factors separated by secondary operators.
+FilterMulti <- first:FilterFactor rest:(_ op:FilterSecOp _ f2:FilterFactor)* {
+        return newSecondaryFilter(first, rest), nil
+}
+
+// A Factor is either a primary filter or a multi filter enclosed by parenthesis
+FilterFactor <- '(' sf:FilterMulti ')' {
+    return sf, nil
+} / pf:FilterPrimary {
+    return pf, nil
+}
+
+FilterSecOp <- "and" / "or" {
+        return string(c.text), nil
+}
+
+
+// A FilterPrimary defines a filter that checks if the value defined by the
+// variable is according to the primary operator.
+FilterPrimary <- name:Expr _ op:FilterPriOp _ value:Value _ {
+        return newPrimaryFilter(name.(string), op, value), nil
+}
+
+FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
+        return string(c.text), nil
+}
+
+
+// Branch Grammar
+
+BranchDo <- "branch(" _ br:BranchPrimary _ ")" {
+        if branch, ok := cast.TryString(br); ok {
+                return Branch{Condition: branch}, nil
+        }
+        return nil, errors.New("Could not decode branch syntax")
+}
+
+BranchPrimary <- name:Expr _ op:BranchPriOp _ value:(Value) {
+        return string(c.text), nil
+}
+
+BranchPriOp <- FilterPriOp
+
+
+// Aggregator Functions Grammar
+
+CountAgg <- "count(" _ args:FilterMulti? _ ")" _ alias:AliasG?  {
+
+    name, filter, err := parseAggArgs(alias, args)
+    if err != nil {
+        return nil, err
+    }
+
+    return Count{Alias: name, Filter: filter}, nil
+}
+
+MaxAgg <- "max(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG?  {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld, _ := cast.TryString(field)
+    return Max{Alias: name, Field: fld, Filter: filter}, nil
+}
+
+MinAgg <- "min(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld, _ := cast.TryString(field)
+    return Min{Alias: name, Field: fld, Filter: filter}, nil
+}
+
+// Alias Grammar
+
+AliasG <- _ "as" _ alias:Variable {
+    if name, ok := cast.TryString(alias); ok {
+        return name, nil
+    }
+    return nil, errors.New("Could not decode alias")
+}
