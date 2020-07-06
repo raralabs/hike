@@ -7,6 +7,7 @@ import (
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
+	"github.com/raralabs/hike/utils"
 )
 
 type CsvReader struct {
@@ -56,7 +57,8 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 
 	content := make(message.MsgContent)
 	for i, v := range cr.header {
-		content[v] = message.NewFieldValue(record[i], message.STRING)
+		value, valType := utils.GetValType(record[i])
+		content[v] = message.NewFieldValue(value, valType)
 	}
 	proc.Result(m, content)
 	cr.currRow++
