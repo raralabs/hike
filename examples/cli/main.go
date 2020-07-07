@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const MaxHistoryLength = 20
+
 func basicCompleter(d prompt.Document) []prompt.Suggest {
 
 	s := []prompt.Suggest{
@@ -43,12 +45,17 @@ func noneCompleter(d prompt.Document) []prompt.Suggest {
 
 func main() {
 	fmt.Println("Please enter command to run.")
-	
+
 	var closeFuncs []func()
+	if MaxHistoryLength < 2 {
+		panic("Can't have history less than 2")
+	}
+	commandHistory := make([]string, MaxHistoryLength)
 
 	builder := peg.NewPegCmd()
 	// Initialize the builder
 	builder.Init()
+
 
 	for {
 		t := prompt.Input("> ", basicCompleter)
@@ -57,7 +64,16 @@ func main() {
 		case "cmd":
 			// Command Mode
 			for {
-				cmd := prompt.Input("Cmd>> ", cmdCompleter)
+				cmd := prompt.Input("Cmd>> ", cmdCompleter, prompt.OptionHistory(commandHistory))
+
+				// Add command to history if it is a new command
+				if cmd != commandHistory[len(commandHistory) - 1] {
+					if len(commandHistory) >= MaxHistoryLength {
+						commandHistory = commandHistory[1:len(commandHistory)]
+					}
+					commandHistory = append(commandHistory, cmd)
+				}
+
 				if cmd == "end" {
 					break
 				}
