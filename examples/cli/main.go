@@ -43,10 +43,29 @@ func noneCompleter(d prompt.Document) []prompt.Suggest {
 	return []prompt.Suggest{}
 }
 
+func HandlePanic(f func()) (err interface{}) {
+	err = nil
+	defer func() {
+		if r := recover(); r != nil {
+			err = r
+		}
+	}()
+
+	f()
+
+	return
+}
+
 func main() {
-	fmt.Println("Please enter command to run.")
+	fmt.Println("Please enter command to run. (Remember to set log file)")
 
 	var closeFuncs []func()
+	defer func() {
+		for _, fn := range closeFuncs {
+			fn()
+		}
+	}()
+
 	if MaxHistoryLength < 2 {
 		panic("Can't have history less than 2")
 	}
@@ -56,71 +75,79 @@ func main() {
 	// Initialize the builder
 	builder.Init()
 
+	hikePrompt := func() {
+		for {
 
-	for {
-		t := prompt.Input("> ", basicCompleter)
+			t := prompt.Input("> ", basicCompleter)
 
-		switch t {
-		case "cmd":
-			// Command Mode
-			for {
-				cmd := prompt.Input("Cmd>> ", cmdCompleter, prompt.OptionHistory(commandHistory))
+			log.Println("Here!!")
 
-				// Add command to history if it is a new command
-				if cmd != commandHistory[len(commandHistory) - 1] {
-					if len(commandHistory) >= MaxHistoryLength {
-						commandHistory = commandHistory[1:len(commandHistory)]
+			switch t {
+			case "cmd":
+				// Command Mode
+				for {
+					cmd := prompt.Input("Cmd>> ", cmdCompleter, prompt.OptionHistory(commandHistory))
+
+					// Add command to history if it is a new command
+					if cmd != commandHistory[len(commandHistory)-1] {
+						if len(commandHistory) >= MaxHistoryLength {
+							commandHistory = commandHistory[1:len(commandHistory)]
+						}
+						commandHistory = append(commandHistory, cmd)
 					}
-					commandHistory = append(commandHistory, cmd)
+
+					if cmd == "end" {
+						break
+					}
+
+					// Build the command
+					starter, ppln, closer := builder.Build(1, cmd)
+
+					// Create context to run the pipeline
+					c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
+
+					// Run the starter to initialize all stages of a pipeline
+					starter()
+
+					// Run the pipeline
+					ppln.Start(c, cancel)
+
+					// Close everything
+					closer()
 				}
 
-				if cmd == "end" {
-					break
+			case "faker":
+				// Fake Data Generation Mode
+				fileName := prompt.Input("Filename>> ", noneCompleter)
+				numRows := prompt.Input("NumRows>> ", noneCompleter)
+				if rows, ok := cast.TryInt(numRows); ok {
+					generateCsv(fileName, int(rows))
+					fmt.Printf("Fake csv file generation success. File: %s\n", fileName)
+				} else {
+					fmt.Println("Fake csv file generation failed.")
 				}
 
-				// Build the command
-				starter, ppln, closer := builder.Build(1, cmd)
+			case "log":
+				// Log File Config Mode
+				fileName := prompt.Input("Log Filename>> ", noneCompleter)
+				closer := setLogFile(fileName)
+				fmt.Printf("Log file config success. File: %s\n", fileName)
 
-				// Create context to run the pipeline
-				c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
-
-				// Run the starter to initialize all stages of a pipeline
-				starter()
-
-				// Run the pipeline
-				ppln.Start(c, cancel)
-
-				// Close everything
-				closer()
+				closeFuncs = append(closeFuncs, closer)
 			}
 
-		case "faker":
-			// Fake Data Generation Mode
-			fileName := prompt.Input("Filename>> ", noneCompleter)
-			numRows := prompt.Input("NumRows>> ", noneCompleter)
-			if rows, ok := cast.TryInt(numRows); ok {
-				generateCsv(fileName, int(rows))
-				fmt.Println("Fake csv file generation success.")
-			} else {
-				fmt.Println("Fake csv file generation failed.")
+			if t == "end" {
+				break
 			}
-
-		case "log":
-			// Log File Config Mode
-			fileName := prompt.Input("Log Filename>> ", noneCompleter)
-			closer := setLogFile(fileName)
-			fmt.Println("Log file config success.")
-
-			closeFuncs = append(closeFuncs, closer)
-		}
-
-		if t == "end" {
-			break
 		}
 	}
 
-	for _, fn := range closeFuncs {
-		fn()
+	for {
+		if err := HandlePanic(hikePrompt); err == nil {
+			break
+		} else {
+			log.Printf("Recovered: %v", err)
+		}
 	}
 }
 
