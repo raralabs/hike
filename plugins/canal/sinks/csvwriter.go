@@ -45,7 +45,12 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 
 	record := make([]string, len(content))
 	for i := 0; i < len(content); i++ {
-		record[i] = fmt.Sprintf("%v", content[cw.header[i]].Val)
+		v := content[cw.header[i]]
+		if v == nil {
+			record[i] = "nil"
+		} else {
+			record[i] = fmt.Sprintf("%v", v.Val)
+		}
 	}
 
 	cw.writer.Write(record)

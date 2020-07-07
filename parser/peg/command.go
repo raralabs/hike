@@ -114,24 +114,24 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, cnt)
 
 				case Max:
-					max := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						match, err := ag.Filter(m)
 						if err != nil {
-							log.Panic(err)
+							log.Panicf("Max Filter Error: %v", err)
 						}
 						return match
 					})
-					aggs = append(aggs, max)
+					aggs = append(aggs, mx)
 
 				case Min:
-					min := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						match, err := ag.Filter(m)
 						if err != nil {
 							log.Panic(err)
 						}
 						return match
 					})
-					aggs = append(aggs, min)
+					aggs = append(aggs, mn)
 				}
 			}
 
