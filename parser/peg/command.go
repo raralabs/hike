@@ -52,7 +52,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			fileName := s.Filename
 
 			// Act as source if at the beginning
-			if i == 0 && len(stgs) > 1 {
+			if i == 0 {
 				f, err := os.Open(fileName)
 				if err != nil {
 					log.Panic(err)
@@ -63,10 +63,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 				lastProc = sp
 				openedFiles = append(openedFiles, f)
-			}
-
-			// Act as sink if at the end
-			if i == len(stgs)-1 {
+			} else if i == len(stgs)-1 { // Act as sink if at the end
 				f, err := os.Create(fileName)
 				if err != nil {
 					log.Panic(err)
