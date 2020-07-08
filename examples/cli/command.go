@@ -50,6 +50,8 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
 
+		start := time.Now()
+
 		// Create context to run the pipeline
 		c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 
@@ -62,6 +64,7 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		// Close everything
 		closer()
 
+		fmt.Printf("[TIME] To run the command: %v\n", time.Since(start))
 	}
 
 	return history
