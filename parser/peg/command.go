@@ -149,11 +149,6 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				return false
 			}
 
-			for _, ag := range aggs {
-				fmt.Printf("%+v  ", ag.Name())
-			}
-			fmt.Println()
-
 			aggregator := agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
 				return true
 			}), aggs, after, s.GroupBy...)
