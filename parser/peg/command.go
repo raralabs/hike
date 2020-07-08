@@ -38,6 +38,8 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 	var openedFiles []*os.File
 	var lastProc pipeline.IProcessor
 
+	useDefaultSink := true
+
 	stgs := cast.ToIfaceSlice(stages)
 	for i, stg := range stgs {
 		pathName := fmt.Sprintf("path%v", i)
@@ -76,6 +78,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 				snk.ReceiveFrom(routeParam, lastProc)
 				openedFiles = append(openedFiles, f)
+				useDefaultSink = false
 			}
 
 		case DoNodeJob:
@@ -170,11 +173,12 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 			switch s.Type {
 			case "stdout":
-				snk := p.AddSink("Stdout Sink")
-				snk.AddProcessor(opts, sinks.NewCsvWriter(os.Stdout), routeParam)
-
-				snk.ReceiveFrom(routeParam, lastProc)
+				useDefaultSink = true
 			}
+		}
+
+		if i == len(stgs) -1 && useDefaultSink {
+			defaultSink(p, routeParam, lastProc)
 		}
 	}
 	p.Validate()
@@ -203,4 +207,13 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 func NewPegCmd() *Command {
 	return &Command{}
+}
+
+func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor) {
+	opts := pipeline.DefaultProcessorOptions
+
+	snk := p.AddSink("Stdout Sink")
+	snk.AddProcessor(opts, sinks.NewCsvWriter(os.Stdout), routeParam)
+
+	snk.ReceiveFrom(routeParam, lastProc)
 }
