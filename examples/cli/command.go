@@ -26,6 +26,8 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		if len(str) == 1 && str[0] == ';' {
 			promptText = "Cmd>> "
 			commandBuilder.Reset()
+			lastCommand := history[len(history)-1]
+			history = addHistory(history, lastCommand + ";")
 			continue
 		}
 
@@ -36,18 +38,14 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		}
 
 		if done {
+			cmd = command + ";"
 			promptText = "Cmd>> "
 		} else {
+			cmd = command
 			promptText = ">>>>> "
 		}
 
-		// Add command to history if it is a not the last command
-		if command != history[len(history)-1] {
-			if len(history) >= MaxHistoryLength {
-				history = history[1:]
-			}
-			history = append(history, command)
-		}
+		history = addHistory(history, cmd)
 
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
@@ -64,6 +62,18 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		// Close everything
 		closer()
 
+	}
+
+	return history
+}
+
+func addHistory(history []string, cmd string) []string {
+	// Add command to history if it is a not the last command
+	if cmd != history[len(history)-1] {
+		if len(history) >= MaxHistoryLength {
+			history = history[1:]
+		}
+		history = append(history, cmd)
 	}
 
 	return history

@@ -19,11 +19,11 @@ Main <- agg:Job rest:(_ "|" _ Job)* {
 
 // Basic Grammar
 
-Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable / Number))* {
+Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable_Value / Number))* {
         return string(c.text), nil
 }
 
-Value <- val:(Number / Word / String_Type1 / String_Type2) {
+Value <- val:(Number / String_Type1 / Variable_Literal / Variable_Value) {
         return val, nil
 }
 
@@ -31,27 +31,13 @@ Variable <- Letter (Integer / Letter/ "_")* {
         return string(c.text), nil
 }
 
-String_Type2 <- "'" w1:Word rest:( _ Word )* "'" {
-        var str strings.Builder
+Variable_Value <- "$" vrbl:Variable {
+    return vrbl, nil
+}
 
-        if w, ok := w1.(string); ok {
-
-                str.WriteString(w)
-                rst := cast.ToIfaceSlice(rest)
-
-                for _, v := range rst {
-                        rstStr := cast.ToIfaceSlice(v)
-                        if len(rstStr) == 2 {
-                                if wrd, ok := rstStr[1].(string); ok {
-                                        str.WriteString(" ")
-                                        str.WriteString(wrd)
-                                }
-                        }
-                }
-        }
-        s := str.String()
-
-        return cast.GetStringValue(s), nil
+Variable_Literal <- vrbl:Variable {
+    vari, _ := cast.TryString(vrbl)
+    return cast.GetStringValue(vari), nil
 }
 
 String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
