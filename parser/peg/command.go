@@ -105,6 +105,12 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				switch ag := ags.(type) {
 				case Count:
 					cnt := aggregates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
 						match, err := ag.Filter(m)
 						if err != nil {
 							log.Panic(err)
@@ -115,6 +121,12 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 				case Max:
 					mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
 						match, err := ag.Filter(m)
 						if err != nil {
 							log.Panicf("Max Filter Error: %v", err)
@@ -125,6 +137,12 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 				case Min:
 					mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+						
 						match, err := ag.Filter(m)
 						if err != nil {
 							log.Panic(err)
