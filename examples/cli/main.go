@@ -22,10 +22,10 @@ func main() {
 		panic("Can't have history less than 2")
 	}
 	commandHistory := make([]string, MaxHistoryLength)
-	builder := peg.NewPegCmd()
+	prsr := peg.NewPegCmd()
 
-	// Initialize the builder
-	builder.Init()
+	// Initialize the parser
+	prsr.Init()
 
 	hikePrompt := func() {
 		for {
@@ -35,7 +35,7 @@ func main() {
 			switch t {
 			case "cmd":
 				// Command Mode
-				commandHistory = CommandMode(builder, commandHistory)
+				commandHistory = CommandMode(prsr, commandHistory)
 
 			case "faker":
 				// Fake Data Generation Mode

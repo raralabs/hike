@@ -2,7 +2,7 @@ package parser
 
 import "github.com/raralabs/canal/core/pipeline"
 
-type IBuilder interface {
+type IParser interface {
 	// Init initializes the grammar and builds the parser.
 	Init()
 
