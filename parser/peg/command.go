@@ -142,7 +142,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 								return false
 							}
 						}
-						
+
 						match, err := ag.Filter(m)
 						if err != nil {
 							log.Panic(err)
