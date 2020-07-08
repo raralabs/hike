@@ -143,6 +143,8 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 						for _, msg := range msgs {
 							proc.Result(m, msg)
 						}
+
+						proc.Result(m, content)
 						return true
 					}
 				}
