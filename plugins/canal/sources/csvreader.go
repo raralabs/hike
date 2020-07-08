@@ -55,10 +55,10 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		log.Panic("Record and Header Length Mismatch")
 	}
 
-	content := make(message.MsgContent)
+	content := message.NewOrderedContent()
 	for i, v := range cr.header {
 		value, valType := utils.GetValType(record[i])
-		content[v] = message.NewFieldValue(value, valType)
+		content.Add(v, message.NewFieldValue(value, valType))
 	}
 	proc.Result(m, content)
 	cr.currRow++
@@ -68,8 +68,8 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 
 func (cr *CsvReader) done(m message.Msg, proc pipeline.IProcessorForExecutor) {
 	// Send eof if done
-	content := make(message.MsgContent)
-	content.AddMessageValue("eof", message.NewFieldValue(true, message.BOOL))
+	content := message.NewOrderedContent()
+	content.Add("eof", message.NewFieldValue(true, message.BOOL))
 	proc.Result(m, content)
 	proc.Done()
 }

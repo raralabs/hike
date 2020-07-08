@@ -25,7 +25,7 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 	content := m.Content()
 
 	// Check for eof
-	if v, ok := content["eof"]; ok {
+	if v, ok := content.Get("eof"); ok {
 		if v.Val == true {
 			proc.Done()
 			return false
@@ -33,9 +33,10 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 	}
 
 	if cw.firstRecord {
-		cw.header = make([]string, len(content))
+		cw.header = make([]string, content.Len())
 		i := 0
-		for k := range content {
+		for e := content.Front(); e != nil; e = e.Next() {
+			k, _ := e.Value.(string)
 			cw.header[i] = k
 			i++
 		}
@@ -43,9 +44,9 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		cw.firstRecord = false
 	}
 
-	record := make([]string, len(content))
-	for i := 0; i < len(content); i++ {
-		v := content[cw.header[i]]
+	record := make([]string, content.Len())
+	for i := 0; i < len(cw.header); i++ {
+		v, _ := content.Get(cw.header[i])
 		if v == nil {
 			record[i] = "nil"
 		} else {

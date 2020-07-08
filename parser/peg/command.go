@@ -85,7 +85,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				proc := stg.AddProcessor(opts, doFn.FilterFunction(func(m message.Msg) (bool, bool, error) {
 					content := m.Content()
 
-					if v, ok := content["eof"]; ok {
+					if v, ok := content.Get("eof"); ok {
 						if v.Val == true {
 							return true, true, nil
 						}
@@ -135,10 +135,10 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				}
 			}
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, msgs []message.MsgContent) bool {
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, msgs []*message.OrderedContent) bool {
 				content := m.Content()
 
-				if v, ok := content["eof"]; ok {
+				if v, ok := content.Get("eof"); ok {
 					if v.Val == true {
 						for _, msg := range msgs {
 							proc.Result(m, msg)
@@ -148,6 +148,11 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				}
 				return false
 			}
+
+			for _, ag := range aggs {
+				fmt.Printf("%+v  ", ag.Name())
+			}
+			fmt.Println()
 
 			aggregator := agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
 				return true
