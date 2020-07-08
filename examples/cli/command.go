@@ -6,6 +6,7 @@ import (
 	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/hike/builder"
 	"github.com/raralabs/hike/parser"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,13 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 
 		if cmd == "end" {
 			break
+		}
+
+		str := strings.TrimSpace(cmd)
+		if len(str) == 1 && str[0] == ';' {
+			promptText = "Cmd>> "
+			commandBuilder.Reset()
+			continue
 		}
 
 		command, done, err := commandBuilder.Add(cmd)

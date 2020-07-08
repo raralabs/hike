@@ -20,12 +20,6 @@ func NewCommand() *Command {
 func (cmd *Command) Add(str string) (string, bool, error) {
 	str = strings.TrimSpace(str)
 
-	if len(str) == 1 && str[0] == ';' {
-		s := cmd.str.String()
-		cmd.str.Reset()
-		return s, true, nil
-	}
-
 	if cmd.str.Len() != 0 && str[0] != '|' {
 		return "", false, errors.New("mistake command")
 	}
@@ -44,4 +38,8 @@ func (cmd *Command) Add(str string) (string, bool, error) {
 	}
 
 	return cmd.str.String(), false, nil
+}
+
+func (cmd *Command) Reset() {
+	cmd.str.Reset()
 }
