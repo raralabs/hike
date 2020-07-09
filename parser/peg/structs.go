@@ -63,3 +63,15 @@ type Min struct {
 	Field  string
 	Filter Filter
 }
+
+type Avg struct {
+	Alias  string
+	Field  string
+	Filter Filter
+}
+
+type Variance struct {
+	Alias  string
+	Field  string
+	Filter Filter
+}
