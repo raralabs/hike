@@ -182,6 +182,22 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 						return match
 					})
 					aggs = append(aggs, variance)
+
+				case DistinctCount:
+					variance := templates.NewHLLpp(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
+						match, err := ag.Filter(m)
+						if err != nil {
+							log.Panic(err)
+						}
+						return match
+					})
+					aggs = append(aggs, variance)
 				}
 			}
 

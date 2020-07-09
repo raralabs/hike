@@ -75,3 +75,9 @@ type Variance struct {
 	Field  string
 	Filter Filter
 }
+
+type DistinctCount struct {
+	Alias  string
+	Field  string
+	Filter Filter
+}

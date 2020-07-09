@@ -43,6 +43,8 @@ github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghf
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
+github.com/clarkduvall/hyperloglog v0.0.0-20171127014514-a0107a5d8004 h1:mK6JroY6bLiPS3s6QCYOSjRyErFc2iHNkhhmRfF0nHo=
+github.com/clarkduvall/hyperloglog v0.0.0-20171127014514-a0107a5d8004/go.mod h1:drodPoQNro6QBO6TJ/MpMZbz8Bn2eSDtRN6jpG4VGw8=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
@@ -178,6 +180,10 @@ github.com/raralabs/canal v0.0.0-20200709141510-51fe62daef28 h1:YqjQH7vkZOPEPKan
 github.com/raralabs/canal v0.0.0-20200709141510-51fe62daef28/go.mod h1:IvhBUS5lBq6LQktdrmvBazXOpgMcZenb/tu22iTf2Ms=
 github.com/raralabs/canal v0.0.0-20200709144400-35c26174d762 h1:Caz0u9CCDt4K8WaSl3gDFXFTgeuKMbMtbXGmVbBg09A=
 github.com/raralabs/canal v0.0.0-20200709144400-35c26174d762/go.mod h1:IvhBUS5lBq6LQktdrmvBazXOpgMcZenb/tu22iTf2Ms=
+github.com/raralabs/canal v0.0.0-20200709162315-c537c366fd1f h1:Vk3iz0sqcZ7+HAlbJJ6Qd1eYB0j9obaaaz56xxpZHRM=
+github.com/raralabs/canal v0.0.0-20200709162315-c537c366fd1f/go.mod h1:L3YgIt8dKJuE4BoUAibiME/6MMZwDoYrTRilN+docNw=
+github.com/raralabs/canal v0.0.0-20200709163113-0141959b1a27 h1:AvaTJyGlWUf7U4lls9OxNzFILkwSWU5v3I9TYwqLwFg=
+github.com/raralabs/canal v0.0.0-20200709163113-0141959b1a27/go.mod h1:L3YgIt8dKJuE4BoUAibiME/6MMZwDoYrTRilN+docNw=
 github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498/go.mod h1:6lkG1x+13OShEf0EaOCaTQYyB7d5nSbb181KtjlS+84=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=

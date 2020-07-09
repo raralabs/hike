@@ -111,7 +111,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
@@ -272,25 +272,47 @@ AvgAgg <- "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
 
 VarAgg <- "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
 
-      var name string
-      var filter Filter
-      var err error
+    var name string
+    var filter Filter
+    var err error
 
-      if args != nil {
-          if ags := cast.ToIfaceSlice(args); ags != nil {
-              name, filter, err = parseAggArgs(alias, ags[2])
-          }
-      } else {
-          name, filter, err = parseAggArgs(alias, nil)
-      }
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
 
-      if err != nil {
-          return nil, err
-      }
+    if err != nil {
+        return nil, err
+    }
 
-      fld, _ := cast.TryString(field)
-      return Variance{Alias: name, Field: fld, Filter: filter}, nil
-  }
+    fld, _ := cast.TryString(field)
+    return Variance{Alias: name, Field: fld, Filter: filter}, nil
+}
+
+DistinctCountAgg <- "distinct_count(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld, _ := cast.TryString(field)
+    return DistinctCount{Alias: name, Field: fld, Filter: filter}, nil
+}
 
 // Alias Grammar
 
