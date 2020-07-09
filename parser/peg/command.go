@@ -2,6 +2,7 @@ package peg
 
 import (
 	"fmt"
+	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 	"log"
 	"os"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
 	"github.com/raralabs/canal/core/transforms/event/poll"
-	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -100,11 +100,11 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 		case AggNodeJob:
 			aggFuncs := s.Functions
-			var aggs []agg.IAggregator
+			var aggs []agg.IAggFuncTemplate
 			for _, ags := range aggFuncs {
 				switch ag := ags.(type) {
 				case Count:
-					cnt := aggregates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
+					cnt := templates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -120,7 +120,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, cnt)
 
 				case Max:
-					mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mx := templates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -136,7 +136,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, mx)
 
 				case Min:
-					mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mn := templates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -150,6 +150,38 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 						return match
 					})
 					aggs = append(aggs, mn)
+
+				case Avg:
+					avg := templates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
+						match, err := ag.Filter(m)
+						if err != nil {
+							log.Panic(err)
+						}
+						return match
+					})
+					aggs = append(aggs, avg)
+
+				case Variance:
+					variance := templates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
+						match, err := ag.Filter(m)
+						if err != nil {
+							log.Panic(err)
+						}
+						return match
+					})
+					aggs = append(aggs, variance)
 				}
 			}
 

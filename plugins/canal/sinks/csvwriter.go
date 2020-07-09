@@ -35,7 +35,7 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 	if cw.firstRecord {
 		cw.header = make([]string, content.Len())
 		i := 0
-		for e := content.Front(); e != nil; e = e.Next() {
+		for e := content.First(); e != nil; e = e.Next() {
 			k, _ := e.Value.(string)
 			cw.header[i] = k
 			i++
