@@ -9,5 +9,5 @@ require (
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
-	github.com/raralabs/canal v0.0.0-20200708102328-35f7d8d81428
+	github.com/raralabs/canal v0.0.0-20200709141510-51fe62daef28
 )

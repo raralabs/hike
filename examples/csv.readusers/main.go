@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 	"log"
 	"os"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
 	"github.com/raralabs/canal/core/transforms/event/poll"
-	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -69,10 +69,10 @@ func main() {
 	f1 := filt.AddProcessor(opts, doFn.FilterFunction(ageFilt), "path2")
 
 	// Count Last Names
-	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
+	count := templates.NewCount("Count", func(m map[string]interface{}) bool {
 		return true
 	})
-	aggs := []agg.IAggregator{count}
+	aggs := []agg.IAggFuncTemplate{count}
 	filterEvent := poll.NewFilterEvent(func(m map[string]interface{}) bool {
 		return true
 	})
