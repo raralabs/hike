@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/c-bata/go-prompt"
 	"log"
 	"os"
+
+	"github.com/c-bata/go-prompt"
 )
 
 func LogMode() func() {

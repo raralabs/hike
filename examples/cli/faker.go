@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/utils/faker"
-	"log"
-	"os"
 )
 
 func FakerMode() {

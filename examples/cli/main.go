@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/hike/parser/peg"
 )

@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/hike/builder"
 	"github.com/raralabs/hike/parser"
-	"strings"
-	"time"
 )
 
 func CommandMode(prsr parser.IParser, history []string) []string {
@@ -27,7 +28,7 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 			promptText = "Cmd>> "
 			commandBuilder.Reset()
 			lastCommand := history[len(history)-1]
-			history = addHistory(history, lastCommand + ";")
+			history = addHistory(history, lastCommand+";")
 			continue
 		}
 
@@ -50,21 +51,21 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
 
-		start := time.Now()
-
 		// Create context to run the pipeline
 		c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 
 		// Run the starter to initialize all stages of a pipeline
 		starter()
 
+		start := time.Now()
+
 		// Run the pipeline
 		ppln.Start(c, cancel)
 
+		fmt.Printf("[TIME] To run the command: %v\n", time.Since(start))
+
 		// Close everything
 		closer()
-
-		fmt.Printf("[TIME] To run the command: %v\n", time.Since(start))
 	}
 
 	return history
