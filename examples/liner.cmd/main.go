@@ -85,6 +85,7 @@ func main() {
 	}()
 
 	line.SetCtrlCAborts(true)
+	line.SetTabCompletionStyle(liner.TabPrints)
 
 	if f, err := os.Open(historyFile); err == nil {
 		line.ReadHistory(f)
