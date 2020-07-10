@@ -1,18 +1,17 @@
-package main
+package cli
 
 import (
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/utils/faker"
 )
 
-func FakerMode() {
-	fileName := prompt.Input("Filename>> ", noneCompleter)
-	numRows := prompt.Input("NumRows>> ", noneCompleter)
+func FakerMode(fakerFunc func(string) string) {
+	fileName := fakerFunc("Filename>> ")
+	numRows := fakerFunc("NumRows>> ")
 	if rows, ok := cast.TryInt(numRows); ok {
 		generateCsv(fileName, int(rows))
 		fmt.Printf("Fake csv file generation success. File: %s\n", fileName)

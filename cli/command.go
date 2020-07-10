@@ -1,34 +1,33 @@
-package main
+package cli
 
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
-	"github.com/c-bata/go-prompt"
 	"github.com/raralabs/hike/builder"
 	"github.com/raralabs/hike/parser"
+	"strings"
+	"time"
 )
 
-func CommandMode(prsr parser.IParser, history []string) []string {
+func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
 	commandBuilder := builder.NewCommand()
 	pipelineId := uint32(1)
 
 	promptText := "Cmd>> "
+	var lastCommand string
 	for {
-		cmd := prompt.Input(promptText, cmdCompleter, prompt.OptionHistory(history))
+		cmd := cmdFunc(promptText)
+		str := strings.TrimSpace(cmd)
+		fmt.Println(str)
 
-		if cmd == "end" {
+		if str == "end" {
 			break
 		}
 
-		str := strings.TrimSpace(cmd)
 		if len(str) == 1 && str[0] == ';' {
 			promptText = "Cmd>> "
 			commandBuilder.Reset()
-			lastCommand := history[len(history)-1]
-			history = addHistory(history, lastCommand+";")
+			addHistory(lastCommand + ";")
 			continue
 		}
 
@@ -46,7 +45,8 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 			promptText = ">>>>> "
 		}
 
-		history = addHistory(history, cmd)
+		lastCommand = command
+		addHistory(cmd)
 
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
@@ -67,18 +67,4 @@ func CommandMode(prsr parser.IParser, history []string) []string {
 		// Close everything
 		closer()
 	}
-
-	return history
-}
-
-func addHistory(history []string, cmd string) []string {
-	// Add command to history if it is a not the last command
-	if cmd != history[len(history)-1] {
-		if len(history) >= MaxHistoryLength {
-			history = history[1:]
-		}
-		history = append(history, cmd)
-	}
-
-	return history
 }

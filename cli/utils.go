@@ -1,4 +1,4 @@
-package main
+package cli
 
 func HandlePanic(f func()) (err interface{}) {
 	err = nil
