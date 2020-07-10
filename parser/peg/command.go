@@ -294,7 +294,7 @@ func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastPr
 	opts := pipeline.DefaultProcessorOptions
 
 	snk := p.AddSink("Stdout Sink")
-	snk.AddProcessor(opts, sinks.NewCsvWriter(os.Stdout), routeParam)
+	snk.AddProcessor(opts, sinks.NewPrettyPrinter(os.Stdout, 10), routeParam)
 
 	snk.ReceiveFrom(routeParam, lastProc)
 }
