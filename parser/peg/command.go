@@ -83,6 +83,17 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			stg := p.AddTransform(stageName)
 			var proc pipeline.IProcessor
 
+			doneFunc := func(m message.Msg) bool {
+				content := m.Content()
+
+				if v, ok := content.Get("eof"); ok {
+					if v.Val == true {
+						return true
+					}
+				}
+				return false
+			}
+
 			switch doJob := s.Function.(type) {
 			case Filter:
 				proc = stg.AddProcessor(opts, doFn.FilterFunction(func(m message.Msg) (bool, bool, error) {
@@ -99,16 +110,10 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 			case Select:
 				fields := doJob.Fields
-				proc = stg.AddProcessor(opts, doFn.SelectFunction(fields, func(m message.Msg) bool {
-					content := m.Content()
+				proc = stg.AddProcessor(opts, doFn.SelectFunction(fields, doneFunc), routeParam)
 
-					if v, ok := content.Get("eof"); ok {
-						if v.Val == true {
-							return true
-						}
-					}
-					return false
-				}), routeParam)
+			case Take:
+				proc = stg.AddProcessor(opts, doFn.Take(doJob.Desc, doJob.Num, doneFunc), routeParam)
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)

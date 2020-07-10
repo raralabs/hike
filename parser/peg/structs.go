@@ -49,6 +49,11 @@ type Select struct {
 	Fields []string
 }
 
+type Take struct {
+	Desc string
+	Num uint64
+}
+
 // Aggregator Functions
 
 type Count struct {

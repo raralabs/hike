@@ -11,5 +11,5 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
-	github.com/raralabs/canal v0.0.0-20200710091843-fdcc16e03d4c
+	github.com/raralabs/canal v0.0.0-20200710110246-0925efc5a855
 )
