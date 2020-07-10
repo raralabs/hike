@@ -1,9 +1,10 @@
 package sinks
 
 import (
+	"io"
+
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
-	"io"
 
 	"github.com/jedib0t/go-pretty/table"
 )
@@ -20,7 +21,7 @@ type PrettyPrint struct {
 
 func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
 	return &PrettyPrint{
-		name:        "FileWriter",
+		name:        "Pretty Printer",
 		writer:      w,
 		firstRecord: true,
 		tw:          table.NewWriter(),

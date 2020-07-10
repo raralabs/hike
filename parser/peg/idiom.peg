@@ -132,7 +132,7 @@ AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         return params, nil
 }
 
-SinkJobG <- StdOutG / BlackHoleG
+SinkJobG <- StdOutG / BlackHoleG / PlotG
 
 StdOutG <- "stdout()" {
         return SinkJob{Type: "stdout"}, nil
@@ -140,6 +140,40 @@ StdOutG <- "stdout()" {
 
 BlackHoleG <- "blackhole()" {
         return SinkJob{Type: "blackhole"}, nil
+}
+
+PlotG <- "plot " _ widget:(BarWidget) {
+    return SinkJob{Type: "plot", Args: widget}, nil
+}
+
+BarWidget <- "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" _ alias:AliasG? {
+
+    title := "Bar Chart"
+	if alias != nil {
+		if nm, ok := cast.TryString(alias); ok {
+			title = nm
+		}
+	}
+
+	xfld, _ := cast.TryString(xField)
+	yfld, _ := cast.TryString(yField)
+
+	width := int64(3)
+	gap := int64(2)
+	if args != nil {
+	    argSlice := cast.ToIfaceSlice(args)
+	    width, _ = cast.TryInt(argSlice[2])
+
+	    gapArg := argSlice[4]
+	    if gapArg != nil {
+	        gapSlice := cast.ToIfaceSlice(gapArg)
+	        gap, _ = cast.TryInt(gapSlice[2])
+	    }
+	}
+
+	title += "(q to quit)"
+
+	return Plot{Type: "bar", Widget: BarPlot{Title: title, XField: xfld, YField: yfld, BarWidth: int(width), BarGap: int(gap)}}, nil
 }
 
 

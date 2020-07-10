@@ -292,6 +292,17 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			switch s.Type {
 			case "stdout":
 				useDefaultSink = true
+
+			default:
+				switch snkJob := s.Args.(type) {
+				case Plot:
+					snk := p.AddSink("Plot Sink")
+					switch w := snkJob.Widget.(type) {
+					case BarPlot:
+						snk.AddProcessor(opts, sinks.NewBarPlot(w.Title, w.XField, w.YField, w.BarWidth, w.BarGap), routeParam)
+					}
+					snk.ReceiveFrom(routeParam, lastProc)
+				}
 			}
 		}
 

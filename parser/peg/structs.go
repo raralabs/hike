@@ -29,6 +29,21 @@ type AggNodeJob struct {
 
 type SinkJob struct {
 	Type string
+	Args interface{}
+}
+
+// Sink Jobs
+type Plot struct {
+	Type   string
+	Widget interface{}
+}
+
+type BarPlot struct {
+	Title    string
+	XField   string
+	YField   string
+	BarWidth int
+	BarGap   int
 }
 
 // Do Functions
@@ -51,7 +66,7 @@ type Select struct {
 
 type Take struct {
 	Desc string
-	Num uint64
+	Num  uint64
 }
 
 // Aggregator Functions
