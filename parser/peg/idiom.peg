@@ -90,11 +90,10 @@ FileJobG <- _ "file(" _ filename:FileName _ ")" {
     return nil, errors.New("could not decode source file name")
 }
 
-FileName <- name:Variable "." ext:Variable {
-    nm, _ := cast.TryString(name)
-    ex, _ := cast.TryString(ext)
+FileName <- Variable ("." ext:Variable)* {
+    nm, _ := cast.TryString(string(c.text))
 
-    return nm + "." + ex, nil
+    return nm, nil
 }
 
 DoJobG <- job:(FilterDo / BranchDo / SelectDo / HeadDo / TailDo) {
