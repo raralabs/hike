@@ -42,9 +42,24 @@ func (cw *BarPlot) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) b
 	// Check for eof
 	if v, ok := content.Get("eof"); ok {
 		if v.Val == true {
+			// Simply return if no data is available
+			noData := false
+			if len(cw.data) == 0 {
+				log.Println("[WARN] No y-Axis data to plot")
+				noData = true
+			}
+			if len(cw.labels) == 0 {
+				log.Println("[WARN] No x-Axis data to plot")
+				noData = true
+			}
+			if noData {
+				proc.Done()
+				return false
+			}
+
 			//Plot the data
 			if err := ui.Init(); err != nil {
-				log.Panicf("failed to initialize termui: %v", err)
+				log.Panicf("Failed to initialize termui: %v", err)
 			}
 			defer ui.Close()
 
@@ -67,21 +82,16 @@ func (cw *BarPlot) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) b
 		}
 	}
 
-	x, ok1 := content.Get(cw.xField)
-	y, ok2 := content.Get(cw.yField)
-
-	if !ok1 || !ok2 {
-		return false
+	if x, ok := content.Get(cw.xField); ok {
+		xs := fmt.Sprintf("%v", x.Value())
+		cw.labels = append(cw.labels, xs)
 	}
 
-	xs := fmt.Sprintf("%v", x.Value())
-
-	if yf, ok := cast.TryFloat(y.Value()); !ok {
-		return false
-	} else {
-		cw.data = append(cw.data, yf)
+	if y, ok := content.Get(cw.yField); ok {
+		if yf, ok := cast.TryFloat(y.Value()); ok {
+			cw.data = append(cw.data, yf)
+		}
 	}
-	cw.labels = append(cw.labels, xs)
 
 	return false
 }
