@@ -50,7 +50,7 @@ func (cw *BarPlot) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) b
 
 			cw.bc.Data = cw.data
 			cw.bc.Labels = cw.labels
-			cw.bc.SetRect(5, 0, len(cw.bc.Data)*(cw.bc.BarWidth+cw.bc.BarGap), 10)
+			cw.bc.SetRect(0, 0, len(cw.bc.Data)*(cw.bc.BarWidth+cw.bc.BarGap), 10)
 
 			ui.Render(cw.bc)
 
