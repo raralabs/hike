@@ -2,9 +2,10 @@ package peg
 
 import (
 	"fmt"
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 	"log"
 	"os"
+
+	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -198,6 +199,23 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 						return match
 					})
 					aggs = append(aggs, variance)
+
+				case Quantile:
+					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Weight, ag.Qth,
+						func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+					aggs = append(aggs, quantile)
 				}
 			}
 
@@ -240,7 +258,7 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			}
 		}
 
-		if i == len(stgs) -1 && useDefaultSink {
+		if i == len(stgs)-1 && useDefaultSink {
 			defaultSink(p, routeParam, lastProc)
 		}
 	}

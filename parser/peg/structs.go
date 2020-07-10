@@ -81,3 +81,11 @@ type DistinctCount struct {
 	Field  string
 	Filter Filter
 }
+
+type Quantile struct {
+	Alias  string
+	Field  string
+	Filter Filter
+	Weight string
+	Qth    float64
+}
