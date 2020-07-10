@@ -47,6 +47,10 @@ type Pass struct {
 
 // Aggregator Functions
 
+type Select struct {
+	Fields []string
+}
+
 type Count struct {
 	Alias  string
 	Filter Filter

@@ -115,7 +115,8 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
+AggJobs <- SelectAgg / CountAgg / MaxAgg / MinAgg / AvgAgg
+           / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
@@ -197,6 +198,21 @@ BranchPriOp <- FilterPriOp
 
 
 // Aggregator Functions Grammar
+
+
+SelectAgg <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
+    fld, _ := cast.TryString(field)
+    fields := []string{ fld }
+
+    rst := cast.ToIfaceSlice(rest)
+    for _, r := range rst {
+        rstVal := cast.ToIfaceSlice(r)
+        fld, _ := cast.TryString(rstVal[2])
+        fields = append(fields, fld)
+    }
+
+    return Select{Fields: fields}, nil
+}
 
 CountAgg <- "count(" _ args:FilterMulti? _ ")" _ alias:AliasG?  {
 

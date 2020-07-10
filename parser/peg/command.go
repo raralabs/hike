@@ -102,122 +102,8 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 		case AggNodeJob:
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
-			for _, ags := range aggFuncs {
-				switch ag := ags.(type) {
-				case Count:
-					cnt := templates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-					aggs = append(aggs, cnt)
-
-				case Max:
-					mx := templates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panicf("Max Filter Error: %v", err)
-						}
-						return match
-					})
-					aggs = append(aggs, mx)
-
-				case Min:
-					mn := templates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-					aggs = append(aggs, mn)
-
-				case Avg:
-					avg := templates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-					aggs = append(aggs, avg)
-
-				case Variance:
-					variance := templates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-					aggs = append(aggs, variance)
-
-				case DistinctCount:
-					variance := templates.NewHLLpp(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-					aggs = append(aggs, variance)
-
-				case Quantile:
-					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Weight, ag.Qth,
-						func(m map[string]interface{}) bool {
-							if v, ok := m["eof"]; ok {
-								if v == true {
-									return false
-								}
-							}
-
-							match, err := ag.Filter(m)
-							if err != nil {
-								log.Panic(err)
-							}
-							return match
-						})
-					aggs = append(aggs, quantile)
-				}
-			}
+			selectIdiom := false
+			var fields []string
 
 			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, msgs []*message.OrderedContent) bool {
 				content := m.Content()
@@ -235,9 +121,146 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				return false
 			}
 
-			aggregator := agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
-				return true
-			}), aggs, after, s.GroupBy...)
+			for _, ags := range aggFuncs {
+
+				switch agss := ags.(type) {
+				case Select:
+
+					if len(aggFuncs) != 1 {
+						log.Panic("Select idiom can only have single aggregator")
+					}
+
+					fields = agss.Fields
+					selectIdiom = true
+
+				default:
+					switch ag := agss.(type) {
+					case Count:
+						cnt := templates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+						aggs = append(aggs, cnt)
+
+					case Max:
+						mx := templates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panicf("Max Filter Error: %v", err)
+							}
+							return match
+						})
+						aggs = append(aggs, mx)
+
+					case Min:
+						mn := templates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+						aggs = append(aggs, mn)
+
+					case Avg:
+						avg := templates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+						aggs = append(aggs, avg)
+
+					case Variance:
+						variance := templates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+						aggs = append(aggs, variance)
+
+					case DistinctCount:
+						variance := templates.NewHLLpp(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+						aggs = append(aggs, variance)
+
+					case Quantile:
+						quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Weight, ag.Qth,
+							func(m map[string]interface{}) bool {
+								if v, ok := m["eof"]; ok {
+									if v == true {
+										return false
+									}
+								}
+
+								match, err := ag.Filter(m)
+								if err != nil {
+									log.Panic(err)
+								}
+								return match
+							})
+						aggs = append(aggs, quantile)
+					}
+				}
+			}
+
+			var aggregator *agg.Aggregator
+			if selectIdiom {
+				aggregator = agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
+					return true
+				}), aggs, after, fields...)
+			} else {
+				aggregator = agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
+					return true
+				}), aggs, after, s.GroupBy...)
+			}
 
 			aggregators = append(aggregators, aggregator)
 
