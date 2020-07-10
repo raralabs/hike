@@ -205,6 +205,22 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					})
 					aggs = append(aggs, avg)
 
+				case Sum:
+					sum := templates.NewSum(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
+						match, err := ag.Filter(m)
+						if err != nil {
+							log.Panic(err)
+						}
+						return match
+					})
+					aggs = append(aggs, sum)
+
 				case Variance:
 					variance := templates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {

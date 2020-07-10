@@ -115,7 +115,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
@@ -309,6 +309,28 @@ AvgAgg <- "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
 
     fld, _ := cast.TryString(field)
     return Avg{Alias: name, Field: fld, Filter: filter}, nil
+}
+
+SumAgg <- "sum(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld, _ := cast.TryString(field)
+    return Sum{Alias: name, Field: fld, Filter: filter}, nil
 }
 
 VarAgg <- "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {

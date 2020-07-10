@@ -79,6 +79,12 @@ type Avg struct {
 	Filter Filter
 }
 
+type Sum struct {
+	Alias  string
+	Field  string
+	Filter Filter
+}
+
 type Variance struct {
 	Alias  string
 	Field  string
