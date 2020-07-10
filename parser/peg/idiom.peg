@@ -97,7 +97,7 @@ FileName <- name:Variable "." ext:Variable {
     return nm + "." + ex, nil
 }
 
-DoJobG <- job:(FilterDo / BranchDo) {
+DoJobG <- job:(FilterDo / BranchDo / SelectDo) {
         return DoNodeJob{Function: job}, nil
 }
 
@@ -115,7 +115,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- SelectAgg / CountAgg / MaxAgg / MinAgg / AvgAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
@@ -197,10 +197,9 @@ BranchPrimary <- name:Expr _ op:BranchPriOp _ value:(Value) {
 BranchPriOp <- FilterPriOp
 
 
-// Aggregator Functions Grammar
+// Select Grammar
 
-
-SelectAgg <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
+SelectDo <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
     fld, _ := cast.TryString(field)
     fields := []string{ fld }
 
@@ -213,6 +212,9 @@ SelectAgg <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
 
     return Select{Fields: fields}, nil
 }
+
+
+// Aggregator Functions Grammar
 
 CountAgg <- "count(" _ args:FilterMulti? _ ")" _ alias:AliasG?  {
 
@@ -312,7 +314,7 @@ VarAgg <- "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Variance{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-DistinctCountAgg <- "distinct_count(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+DistinctCountAgg <- "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
 
     var name string
     var filter Filter

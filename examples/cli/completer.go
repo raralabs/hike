@@ -24,7 +24,7 @@ func cmdCompleter(d prompt.Document) []prompt.Suggest {
 		{Text: "stdout(", Description: "Add stdout sink"},
 		{Text: "end", Description: "Ends current mode"},
 
-		{Text: "distinct_count(", Description: "Add distinct count aggregator"},
+		{Text: "dcount(", Description: "Add distinct count aggregator"},
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }

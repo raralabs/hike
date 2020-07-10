@@ -45,11 +45,11 @@ type Delay struct {
 type Pass struct {
 }
 
-// Aggregator Functions
-
 type Select struct {
 	Fields []string
 }
+
+// Aggregator Functions
 
 type Count struct {
 	Alias  string
