@@ -115,7 +115,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
@@ -378,6 +378,52 @@ MedianAgg <- "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," 
 
     fld, _ := cast.TryString(field)
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: float64(0.5)}, nil
+}
+
+QuartileAgg <- "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Number _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    wt := ""
+    if weight != nil {
+        w := cast.ToIfaceSlice(weight)
+        wt, _ = cast.TryString(w[2])
+    }
+
+    q, _ := cast.TryInt(qth)
+    if q < 1 || q > 4 {
+        log.Panic("Quartile must be in range (1, 4)")
+    }
+
+    if name == "" {
+        if trail, ok := posMap[int(q)]; ok {
+            name = fmt.Sprintf("%v%s Quartile", q, trail)
+        } else {
+            name = fmt.Sprintf("%vth Quartile", q)
+        }
+    }
+
+    qn := float64(q) * 0.25
+    if qn > 1 {
+        qn = float64(1)
+    }
+
+    fld, _ := cast.TryString(field)
+    return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: qn}, nil
 }
 
 // Alias Grammar

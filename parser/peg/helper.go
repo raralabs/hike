@@ -6,6 +6,12 @@ import (
 	"github.com/raralabs/canal/utils/cast"
 )
 
+var posMap = map[int]string {
+	1: "st",
+	2: "nd",
+	3: "rd",
+}
+
 func parseAggArgs(alias interface{}, flt interface{}) (string, Filter, error) {
 
 	name := ""
