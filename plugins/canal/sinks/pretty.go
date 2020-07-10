@@ -15,6 +15,7 @@ type PrettyPrint struct {
 	header      []string
 	tw          table.Writer
 	maxRows     uint64
+	endMessage  bool
 }
 
 func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
@@ -24,6 +25,7 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
 		firstRecord: true,
 		tw:          table.NewWriter(),
 		maxRows:     maxRows,
+		endMessage:  false,
 	}
 }
 
@@ -37,6 +39,9 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 			// Print the table
 			cw.writer.Write([]byte(cw.tw.Render()))
 			cw.writer.Write([]byte("\n"))
+			if cw.endMessage {
+				cw.writer.Write([]byte("...and more.\n"))
+			}
 
 			// All done
 			proc.Done()
@@ -45,6 +50,7 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 	}
 
 	if cw.maxRows == 0 {
+		cw.endMessage = true
 		return true
 	}
 	cw.maxRows--
