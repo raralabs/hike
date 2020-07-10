@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	history_fn = filepath.Join("./", ".liner_example_history")
-	names      = []string{"john", "james", "mary", "nancy", "nischal"}
+	historyFn = filepath.Join("./", ".tmp.liner_example_history")
+	names     = []string{"john", "james", "mary", "nancy", "nischal"}
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		return
 	})
 
-	if f, err := os.Open(history_fn); err == nil {
+	if f, err := os.Open(historyFn); err == nil {
 		line.ReadHistory(f)
 		f.Close()
 	}
@@ -43,7 +43,7 @@ func main() {
 		log.Print("Error reading line: ", err)
 	}
 
-	if f, err := os.Create(history_fn); err != nil {
+	if f, err := os.Create(historyFn); err != nil {
 		log.Print("Error writing history file: ", err)
 	} else {
 		line.WriteHistory(f)

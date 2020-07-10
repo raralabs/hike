@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	historyFile = filepath.Join("./", ".cmd_history")
+	historyFile = filepath.Join("./", ".tmp.cmd_history")
 
 	defaultSuggestions = []string{
 		"cmd",
@@ -104,7 +104,7 @@ func main() {
 	} else if err != nil {
 		log.Panic(err)
 	}
-	
+
 	if strings.ToLower(t) == "y" {
 		closer := cli.LogMode(func(prompt string) string {
 			t, err := line.Prompt(prompt)
@@ -115,8 +115,8 @@ func main() {
 		})
 		closeFuncs = append(closeFuncs, closer)
 	} else {
-		cli.SetLogFile("default.log")
-		fmt.Println("Default logging to: default.log")
+		cli.SetLogFile("default.tmp.log")
+		fmt.Println("Default logging to: default.tmp.log")
 	}
 
 	hikePrompt := func() {
