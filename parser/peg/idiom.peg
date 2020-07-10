@@ -115,7 +115,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg / QuantileAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
@@ -346,6 +346,38 @@ QuantileAgg <- "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ 
 
     fld, _ := cast.TryString(field)
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: q}, nil
+}
+
+MedianAgg <- "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    wt := ""
+    if weight != nil {
+        w := cast.ToIfaceSlice(weight)
+        wt, _ = cast.TryString(w[2])
+    }
+
+    if name == "" {
+        name = "Median"
+    }
+
+    fld, _ := cast.TryString(field)
+    return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: float64(0.5)}, nil
 }
 
 // Alias Grammar
