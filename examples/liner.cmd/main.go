@@ -26,8 +26,9 @@ var (
 
 		"filter(",
 		"select(",
-		"head(",
-		"tail(",
+
+		"pick ",
+		"first(", "last(", "random(",
 
 		"count(",
 		"dcount(",
@@ -39,6 +40,9 @@ var (
 		"median(",
 		"quartile(",
 		"quantile(",
+
+		"plot ",
+		"bar(",
 
 		"end",
 	}
@@ -58,9 +62,13 @@ func defaultSuggest(line string) (c []string) {
 }
 
 func commandSuggest(line string) (c []string) {
+	words := strings.Fields(line)
+	lastWord := words[len(words)-1]
 	for _, n := range commandSuggestions {
-		if strings.HasPrefix(n, strings.ToLower(line)) {
-			c = append(c, n)
+		if strings.HasPrefix(n, strings.ToLower(lastWord)) {
+			curr := strings.Join(words[:len(words)-1], " ")
+			suggest := fmt.Sprintf("%s %s", curr, n)
+			c = append(c, suggest)
 		}
 	}
 	return

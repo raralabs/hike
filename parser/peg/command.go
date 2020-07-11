@@ -18,14 +18,29 @@ import (
 	"github.com/raralabs/hike/plugins/canal/sources"
 )
 
-type Command struct {
+var availablePicks = []string {
+	"first",
+	"random",
+	"last",
 }
 
-func (c *Command) Init() {
+func strIn(strs []string, str string) bool {
+	for _, s := range strs {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
+type command struct {
+}
+
+func (c *command) Init() {
 	// Build the grammar, generate codes and stuffs in here
 }
 
-func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
+func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
 	stages, err := Parse("", []byte(cmd))
 
 	if err != nil {
@@ -112,8 +127,12 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				fields := doJob.Fields
 				proc = stg.AddProcessor(opts, doFn.SelectFunction(fields, doneFunc), routeParam)
 
-			case Take:
-				proc = stg.AddProcessor(opts, doFn.Take(doJob.Desc, doJob.Num, doneFunc), routeParam)
+			case Pick:
+				dsc := doJob.Desc
+				if !strIn(availablePicks, dsc) {
+					log.Panicf("Can't pick by: %s", dsc)
+				}
+				proc = stg.AddProcessor(opts, doFn.PickFunction(dsc, doJob.Num, doneFunc), routeParam)
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)
@@ -334,8 +353,8 @@ func (c *Command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 	return starter, p, closer
 }
 
-func NewPegCmd() *Command {
-	return &Command{}
+func NewPegCmd() *command {
+	return &command{}
 }
 
 func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor) {

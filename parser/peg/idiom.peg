@@ -96,7 +96,7 @@ FileName <- Variable ("." ext:Variable)* {
     return nm, nil
 }
 
-DoJobG <- job:(FilterDo / BranchDo / SelectDo / HeadDo / TailDo) {
+DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo) {
         return DoNodeJob{Function: job}, nil
 }
 
@@ -246,23 +246,16 @@ SelectDo <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
     return Select{Fields: fields}, nil
 }
 
-// Head, Tail Grammar
-HeadDo <- "head(" _ num:Number _ ")" {
+// Pick Grammar
+PickDo <- "pick" _ desc:Variable "(" _ num:Number _ ")" {
     n, _ := cast.TryInt(num)
     if n < 0 {
         log.Panic("Can't take less than 0 items")
     }
 
-    return Take{Desc: "head", Num: uint64(n)}, nil
-}
+    dsc, _ := cast.TryString(desc)
 
-TailDo <- "tail(" _ num:Number _ ")" {
-    n, _ := cast.TryInt(num)
-    if n < 0 {
-        log.Panic("Can't take less than 0 items")
-    }
-
-    return Take{Desc: "tail", Num: uint64(n)}, nil
+    return Pick{Desc: dsc, Num: uint64(n)}, nil
 }
 
 

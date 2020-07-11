@@ -64,7 +64,7 @@ type Select struct {
 	Fields []string
 }
 
-type Take struct {
+type Pick struct {
 	Desc string
 	Num  uint64
 }
