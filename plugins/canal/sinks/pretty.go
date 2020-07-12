@@ -1,7 +1,6 @@
 package sinks
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/raralabs/canal/core/message"
@@ -80,7 +79,6 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 			row[i] = v.Val
 		}
 	}
-	fmt.Println(row)
 
 	cw.tw.AppendRow(row)
 

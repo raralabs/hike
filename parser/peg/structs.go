@@ -69,6 +69,10 @@ type Pick struct {
 	Num  uint64
 }
 
+type Sort struct {
+	Field string
+}
+
 // Aggregator Functions
 
 type Count struct {

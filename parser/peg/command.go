@@ -18,7 +18,7 @@ import (
 	"github.com/raralabs/hike/plugins/canal/sources"
 )
 
-var availablePicks = []string {
+var availablePicks = []string{
 	"first",
 	"random",
 	"last",
@@ -133,6 +133,10 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					log.Panicf("Can't pick by: %s", dsc)
 				}
 				proc = stg.AddProcessor(opts, doFn.PickFunction(dsc, doJob.Num, doneFunc), routeParam)
+
+			case Sort:
+				fld := doJob.Field
+				proc = stg.AddProcessor(opts, doFn.SortFunction(fld, doneFunc), routeParam)
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)

@@ -234,6 +234,10 @@ github.com/raralabs/canal v0.0.0-20200712121249-9d40e892d186 h1:E2mE3fq4wBGsrv0K
 github.com/raralabs/canal v0.0.0-20200712121249-9d40e892d186/go.mod h1:kdj2R4fXVXG7LfFd8Jm9cSxs91hSM6tTz6yVVe9ixeA=
 github.com/raralabs/canal v0.0.0-20200712124459-bf039c571e48 h1:v2Ab7jrcAFiLxRarTbkbSNvb023K/XJcOn6lH3UEn2w=
 github.com/raralabs/canal v0.0.0-20200712124459-bf039c571e48/go.mod h1:kdj2R4fXVXG7LfFd8Jm9cSxs91hSM6tTz6yVVe9ixeA=
+github.com/raralabs/canal v0.0.0-20200712173715-3eac7a59c683 h1:ulXM/OJgGQxQYsZ2/KyeGpgiasUwFfwLVA9T9xUP/Z4=
+github.com/raralabs/canal v0.0.0-20200712173715-3eac7a59c683/go.mod h1:kdj2R4fXVXG7LfFd8Jm9cSxs91hSM6tTz6yVVe9ixeA=
+github.com/raralabs/canal v0.0.0-20200712185837-02f28cb0207e h1:ClvNDGQ4R5RoVx8F32MOucvWeAL2GPtbwUgZMAC/Pdw=
+github.com/raralabs/canal v0.0.0-20200712185837-02f28cb0207e/go.mod h1:kdj2R4fXVXG7LfFd8Jm9cSxs91hSM6tTz6yVVe9ixeA=
 github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498/go.mod h1:6lkG1x+13OShEf0EaOCaTQYyB7d5nSbb181KtjlS+84=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
