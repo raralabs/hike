@@ -18,7 +18,6 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 	for {
 		cmd := cmdFunc(promptText)
 		str := strings.TrimSpace(cmd)
-		fmt.Println(str)
 
 		if str == "end" {
 			break

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
+	"github.com/raralabs/hike/plugins/asciigraph/plot"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -16,17 +15,16 @@ type BarPlot struct {
 	name   string
 	xField string
 	yField string
-	bc     *widgets.BarChart
+	bc     *plot.Bar
 	data   []float64
 	labels []string
 }
 
 func NewBarPlot(title, xField, yField string, width, gap int) *BarPlot {
 
-	bc := widgets.NewBarChart()
-	bc.Title = title
-	bc.BarWidth = width
-	bc.BarGap = gap
+	bc := plot.NewBar()
+	bc.Width = width
+	bc.Gap = gap
 	return &BarPlot{
 		name:   "Bar Plot",
 		xField: xField,
@@ -57,28 +55,14 @@ func (cw *BarPlot) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) b
 				return false
 			}
 
-			//Plot the data
-			if err := ui.Init(); err != nil {
-				log.Panicf("Failed to initialize termui: %v", err)
-			}
-			defer ui.Close()
-
 			cw.bc.Data = cw.data
 			cw.bc.Labels = cw.labels
-			cw.bc.SetRect(0, 0, len(cw.bc.Data)*(cw.bc.BarWidth+cw.bc.BarGap), 10)
 
-			ui.Render(cw.bc)
+			graph := cw.bc.Plot()
+			fmt.Println(graph)
 
-			uiEvents := ui.PollEvents()
-			for {
-				e := <-uiEvents
-				switch e.ID {
-				case "q", "<C-c>":
-					// All done
-					proc.Done()
-					return false
-				}
-			}
+			proc.Done()
+			return false
 		}
 	}
 
