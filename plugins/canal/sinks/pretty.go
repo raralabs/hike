@@ -1,6 +1,7 @@
 package sinks
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/raralabs/canal/core/message"
@@ -73,12 +74,13 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 	row := make(table.Row, content.Len())
 	for i := 0; i < len(cw.header); i++ {
 		v, _ := content.Get(cw.header[i])
-		if v == nil {
-			row[i] = nil
+		if v.Val == nil {
+			row[i] = "nil"
 		} else {
 			row[i] = v.Val
 		}
 	}
+	fmt.Println(row)
 
 	cw.tw.AppendRow(row)
 

@@ -47,7 +47,7 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 	record := make([]string, content.Len())
 	for i := 0; i < len(cw.header); i++ {
 		v, _ := content.Get(cw.header[i])
-		if v == nil {
+		if v.Val == nil {
 			record[i] = "nil"
 		} else {
 			record[i] = fmt.Sprintf("%v", v.Val)
