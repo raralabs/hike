@@ -119,3 +119,24 @@ type Quantile struct {
 	Weight string
 	Qth    float64
 }
+
+type Covariance struct {
+	Alias  string
+	Field1 string
+	Field2 string
+	Filter Filter
+}
+
+type Correlation struct {
+	Alias  string
+	Field1 string
+	Field2 string
+	Filter Filter
+}
+
+type PValue struct {
+	Alias  string
+	Field1 string
+	Field2 string
+	Filter Filter
+}

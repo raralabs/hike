@@ -116,6 +116,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
 
 AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
+           / CovAgg / CorrAgg / PValueAgg
 
 AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
@@ -509,6 +510,75 @@ QuartileAgg <- "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ 
 
     fld, _ := cast.TryString(field)
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: qn}, nil
+}
+
+CovAgg <- "cov(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld1, _ := cast.TryString(field1)
+    fld2, _ := cast.TryString(field2)
+    return Covariance{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
+}
+
+CorrAgg <- "correlation(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld1, _ := cast.TryString(field1)
+    fld2, _ := cast.TryString(field2)
+    return Correlation{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
+}
+
+PValueAgg <- "pvalue(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld1, _ := cast.TryString(field1)
+    fld2, _ := cast.TryString(field2)
+    return PValue{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
 }
 
 // Alias Grammar

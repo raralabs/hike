@@ -288,6 +288,57 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 							return match
 						})
 					aggs = append(aggs, quantile)
+
+				case Covariance:
+					quantile := templates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
+						func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+					aggs = append(aggs, quantile)
+
+				case Correlation:
+					quantile := templates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
+						func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+					aggs = append(aggs, quantile)
+
+				case PValue:
+					quantile := templates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
+						func(m map[string]interface{}) bool {
+							if v, ok := m["eof"]; ok {
+								if v == true {
+									return false
+								}
+							}
+
+							match, err := ag.Filter(m)
+							if err != nil {
+								log.Panic(err)
+							}
+							return match
+						})
+					aggs = append(aggs, quantile)
 				}
 			}
 
