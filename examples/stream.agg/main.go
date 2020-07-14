@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/raralabs/canal/core/message"
-	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 	"log"
 	"os"
 	"time"
+
+	"github.com/raralabs/canal/core/message"
+	"github.com/raralabs/canal/core/transforms/agg"
+	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/ext/transforms/doFn"
@@ -61,7 +62,6 @@ func main() {
 
 	counter := p.AddTransform("Aggregator")
 	cnt := counter.AddProcessor(opts, aggregator.Function(), "path2")
-
 
 	//Count
 	count2 := templates.NewCount("Count", func(m map[string]interface{}) bool {

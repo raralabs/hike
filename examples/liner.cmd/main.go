@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/peterh/liner"
-	"github.com/raralabs/hike/cli"
-	"github.com/raralabs/hike/parser/peg"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/peterh/liner"
+	"github.com/raralabs/hike/cli"
+	"github.com/raralabs/hike/parser/peg"
 )
 
 var (

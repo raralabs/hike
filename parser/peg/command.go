@@ -145,7 +145,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent *message.OrderedContent){
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent *message.OrderedContent) {
 
 				contents := m.Content()
 				if v, ok := contents.Get("eof"); ok {
