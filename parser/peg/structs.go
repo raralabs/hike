@@ -73,6 +73,10 @@ type Sort struct {
 	Field string
 }
 
+type Batch struct {
+	Num int64
+}
+
 // Aggregator Functions
 
 type Count struct {

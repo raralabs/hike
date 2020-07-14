@@ -96,7 +96,7 @@ FileName <- Variable ("." ext:Variable)* {
     return nm, nil
 }
 
-DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo) {
+DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
         return DoNodeJob{Function: job}, nil
 }
 
@@ -263,6 +263,16 @@ PickDo <- "pick" _ desc:Variable "(" _ num:Number _ ")" {
 SortDo <- "sort()" _ "by" _ alias:Variable {
     fld, _ := cast.TryString(alias)
     return Sort{Field: fld}, nil
+}
+
+// Batch Grammar
+BatchDo <- "batch(" _ num:Number? _ ")" {
+
+    n := int64(-1)
+    if num != nil {
+        n, _ = cast.TryInt(num)
+    }
+    return Batch{Num: n}, nil
 }
 
 
