@@ -10,7 +10,6 @@ import (
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/core/transforms/event/poll"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -146,20 +145,17 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, msgs []*message.OrderedContent) bool {
-				content := m.Content()
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent *message.OrderedContent){
 
-				if v, ok := content.Get("eof"); ok {
+				contents := m.Content()
+				if v, ok := contents.Get("eof"); ok {
 					if v.Val == true {
-						for _, msg := range msgs {
-							proc.Result(m, msg)
-						}
-
-						proc.Result(m, content)
-						return true
+						proc.Result(m, contents, nil)
+						proc.Done()
+						return
 					}
 				}
-				return false
+				proc.Result(m, content, pContent)
 			}
 
 			for _, ags := range aggFuncs {
@@ -346,9 +342,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				}
 			}
 
-			aggregator := agg.NewAggregator(poll.NewFilterEvent(func(m map[string]interface{}) bool {
-				return true
-			}), aggs, after, s.GroupBy...)
+			aggregator := agg.NewAggregator(aggs, after, s.GroupBy...)
 
 			aggregators = append(aggregators, aggregator)
 
@@ -387,11 +381,11 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 	p.Validate()
 
 	starter := func() {
-		if aggregators != nil && len(aggregators) != 0 {
-			for _, ag := range aggregators {
-				ag.Start()
-			}
-		}
+		//if aggregators != nil && len(aggregators) != 0 {
+		//	for _, ag := range aggregators {
+		//		ag.Start()
+		//	}
+		//}
 	}
 
 	closer := func() {

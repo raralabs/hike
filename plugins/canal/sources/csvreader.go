@@ -60,7 +60,7 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		value, valType := utils.GetValType(record[i])
 		content.Add(v, message.NewFieldValue(value, valType))
 	}
-	proc.Result(m, content)
+	proc.Result(m, content, nil)
 	cr.currRow++
 
 	return false
@@ -70,7 +70,7 @@ func (cr *CsvReader) done(m message.Msg, proc pipeline.IProcessorForExecutor) {
 	// Send eof if done
 	content := message.NewOrderedContent()
 	content.Add("eof", message.NewFieldValue(true, message.BOOL))
-	proc.Result(m, content)
+	proc.Result(m, content, nil)
 	proc.Done()
 }
 

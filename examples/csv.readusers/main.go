@@ -10,7 +10,6 @@ import (
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/core/transforms/event/poll"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -73,23 +72,7 @@ func main() {
 		return true
 	})
 	aggs := []agg.IAggFuncTemplate{count}
-	filterEvent := poll.NewFilterEvent(func(m map[string]interface{}) bool {
-		return true
-	})
-	after := func(m message.Msg, proc pipeline.IProcessorForExecutor, msgs []*message.OrderedContent) bool {
-		content := m.Content()
-
-		if v, ok := content.Get("eof"); ok {
-			if v.Val == true {
-				for _, msg := range msgs {
-					proc.Result(m, msg)
-				}
-				return true
-			}
-		}
-		return false
-	}
-	aggregator := agg.NewAggregator(filterEvent, aggs, after, "last_name")
+	aggregator := agg.NewAggregator(aggs, nil, "last_name")
 
 	counter := p.AddTransform("Aggregator")
 	cnt := counter.AddProcessor(opts, aggregator.Function(), "path3")
@@ -104,7 +87,7 @@ func main() {
 
 	c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 	p.Validate()
-	aggregator.Start()
+
 	p.Start(c, cancel)
 
 	file.Close()
