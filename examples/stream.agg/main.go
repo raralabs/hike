@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
-	"os"
-	"time"
-
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/transforms/agg"
 	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
+	"log"
+	"os"
+	"time"
 
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/ext/transforms/doFn"
@@ -64,22 +63,22 @@ func main() {
 	cnt := counter.AddProcessor(opts, aggregator.Function(), "path2")
 
 	//Count
-	count2 := templates.NewCount("Count", func(m map[string]interface{}) bool {
+	genAgg := templates.NewAvg("Generic", "Count", func(m map[string]interface{}) bool {
 		return true
 	})
-	aggs2 := []agg.IAggFuncTemplate{count2}
+	aggs2 := []agg.IAggFuncTemplate{genAgg}
 	aggregator2 := agg.NewAggregator(aggs2, after)
 
-	counter2 := p.AddTransform("Aggregator2")
-	cnt2 := counter2.AddProcessor(opts, aggregator2.Function(), "path3")
+	genericAgg := p.AddTransform("Generic Agg")
+	gAgg := genericAgg.AddProcessor(opts, aggregator2.Function(), "path3")
 
 	snk := p.AddSink("CSV Writer")
 	snk.AddProcessor(opts, csvsnk.NewPrettyPrinter(os.Stdout, 100), "sink")
 
 	delay.ReceiveFrom("path1", sp)
 	counter.ReceiveFrom("path2", del)
-	counter2.ReceiveFrom("path3", cnt)
-	snk.ReceiveFrom("sink", cnt2)
+	genericAgg.ReceiveFrom("path3", cnt)
+	snk.ReceiveFrom("sink", gAgg)
 
 	c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 	p.Validate()

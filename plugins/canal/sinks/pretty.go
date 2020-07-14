@@ -1,25 +1,13 @@
 package sinks
 
 import (
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 
 	"github.com/jedib0t/go-pretty/table"
 )
-
-func stringRep(strs ...interface{}) string {
-	var str strings.Builder
-
-	for _, s := range strs {
-		str.WriteString(fmt.Sprintf("%v", s))
-	}
-
-	return str.String()
-}
 
 type PrettyPrint struct {
 	name        string
@@ -47,6 +35,7 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
 func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
 
 	content := m.Content()
+	//fmt.Println(content, m.PrevContent())
 
 	if eof, ok := content.Get("eof"); ok {
 		if eof.Val == true {
@@ -66,7 +55,11 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 					row := make([]interface{}, len(cw.records))
 					j := 0
 					for _, h := range cw.header {
-						row[j] = cw.records[h][i].Value()
+						v := cw.records[h][i].Value()
+						if v == nil {
+							v = "nil"
+						}
+						row[j] = v
 						j++
 					}
 					cw.tw.AppendRow(row)
@@ -101,7 +94,6 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 		cw.firstRecord = false
 	}
 
-	replaced := false
 	depth := 0
 	if len(cw.header) != 0 {
 		depth = len(cw.records[cw.header[0]])
@@ -111,42 +103,36 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 	if pContent != nil {
 		for i := 0; i < depth; i++ {
 			replace := true
-			if content.Len() > pContent.Len() {
-				for k, v := range cw.records {
-					c, ok1 := content.Get(k)
-					_, ok2 := pContent.Get(k)
+			for _, h := range cw.header {
+				v1, ok1 := cw.records[h]
+				v2, ok2 := pContent.Get(h)
 
-					if ok1 && !ok2 {
-						replace = replace && (v[i].Value() == c.Value() && v[i].ValueType() == c.ValueType())
-						if replace {
-							replaced = true
-						} else {
-							break
-						}
-					}
+				if !ok1 && !ok2 {
+					goto breakLoop
 				}
-			} else {
-				replaced = true
+
+				if !(v1[i].Value() == v2.Value() && v1[i].ValueType() == v2.ValueType()) {
+					replace = false
+				}
+
+				if !replace {
+					break
+				}
 			}
 
 			if replace {
-				for e := pContent.First(); e != nil; e = e.Next() {
-					k, _ := e.Value.(string)
-
-					if v, ok := cw.records[k]; ok {
-						newVal, _ := content.Get(k)
-						v[i] = newVal
-					}
+				for _, h := range cw.header {
+					val, _ := content.Get(h)
+					cw.records[h][i] = val
 				}
-
+				return false
 			}
 		}
 	}
-	if !replaced {
-		for _, k := range cw.header {
-			if val, ok := content.Get(k); ok {
-				cw.records[k] = append(cw.records[k], val)
-			}
+breakLoop:
+	for _, k := range cw.header {
+		if val, ok := content.Get(k); ok {
+			cw.records[k] = append(cw.records[k], val)
 		}
 	}
 
