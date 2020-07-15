@@ -304,7 +304,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, variance)
 
 				case Quantile:
-					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Weight, ag.Qth,
+					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -321,7 +321,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, quantile)
 
 				case Covariance:
-					quantile := templates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
+					cov := templates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -335,10 +335,10 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 							}
 							return match
 						})
-					aggs = append(aggs, quantile)
+					aggs = append(aggs, cov)
 
 				case Correlation:
-					quantile := templates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
+					corr := templates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -352,10 +352,10 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 							}
 							return match
 						})
-					aggs = append(aggs, quantile)
+					aggs = append(aggs, corr)
 
 				case PValue:
-					quantile := templates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
+					pval := templates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -369,7 +369,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 							}
 							return match
 						})
-					aggs = append(aggs, quantile)
+					aggs = append(aggs, pval)
 				}
 			}
 
