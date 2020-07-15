@@ -5,11 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
-
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
+	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -289,7 +288,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, variance)
 
 				case DistinctCount:
-					variance := templates.NewHLLpp(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					variance := templates.NewDCount(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
