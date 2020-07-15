@@ -114,7 +114,7 @@ AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg
+AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
            / CovAgg / CorrAgg / PValueAgg
 
@@ -418,6 +418,28 @@ DistinctCountAgg <- "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")"
 
     fld, _ := cast.TryString(field)
     return DistinctCount{Alias: name, Field: fld, Filter: filter}, nil
+}
+
+ModeAgg <- "mode(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+
+    var name string
+    var filter Filter
+    var err error
+
+    if args != nil {
+        if ags := cast.ToIfaceSlice(args); ags != nil {
+            name, filter, err = parseAggArgs(alias, ags[2])
+        }
+    } else {
+        name, filter, err = parseAggArgs(alias, nil)
+    }
+
+    if err != nil {
+        return nil, err
+    }
+
+    fld, _ := cast.TryString(field)
+    return Mode{Alias: name, Field: fld, Filter: filter}, nil
 }
 
 QuantileAgg <- "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Float _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {

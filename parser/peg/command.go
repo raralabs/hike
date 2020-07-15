@@ -303,6 +303,22 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					})
 					aggs = append(aggs, variance)
 
+				case Mode:
+					variance := templates.NewMode(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+						if v, ok := m["eof"]; ok {
+							if v == true {
+								return false
+							}
+						}
+
+						match, err := ag.Filter(m)
+						if err != nil {
+							log.Panic(err)
+						}
+						return match
+					})
+					aggs = append(aggs, variance)
+
 				case Quantile:
 					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
 						func(m map[string]interface{}) bool {

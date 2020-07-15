@@ -120,6 +120,12 @@ type DistinctCount struct {
 	Filter Filter
 }
 
+type Mode struct {
+	Alias  string
+	Field  string
+	Filter Filter
+}
+
 type Quantile struct {
 	Alias  string
 	Field  string
