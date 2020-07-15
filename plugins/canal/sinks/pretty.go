@@ -107,7 +107,7 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 				v1, ok1 := cw.records[h]
 				v2, ok2 := pContent.Get(h)
 
-				if !ok1 && !ok2 {
+				if !ok1 || !ok2 {
 					goto breakLoop
 				}
 
