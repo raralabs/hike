@@ -176,7 +176,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent *message.OrderedContent) {
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent []*message.OrderedContent) {
 
 				contents := m.Content()
 				if v, ok := contents.Get("eof"); ok {
@@ -186,7 +186,9 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 						return
 					}
 				}
-				proc.Result(m, content, pContent)
+				for i := range content {
+					proc.Result(m, content[i], pContent[i])
+				}
 			}
 
 			for _, ags := range aggFuncs {
