@@ -1,0 +1,4 @@
+Species,Count,Max_of_SepalLengthCm,Min_of_SepalLengthCm,Median_of_SepalLengthCm,Var_of_SepalLengthCm,Avg_of_SepalLengthCm,DCount_of_SepalLengthCm
+Iris-setosa,50,5.8,4.3,5,0.122,5.006,15
+Iris-versicolor,50,7,4.9,5.9,0.261,5.936,21
+Iris-virginica,50,7.9,4.9,6.5,0.396,6.588,21

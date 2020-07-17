@@ -15,6 +15,6 @@ require (
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/peterh/liner v1.2.0
-	github.com/raralabs/canal v0.0.0-20200717093836-7b1f4f507109
+	github.com/raralabs/canal v0.0.0-20200717155349-b8eb68c2e244
 	github.com/stretchr/testify v1.5.1
 )
