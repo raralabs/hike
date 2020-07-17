@@ -3,10 +3,11 @@ package sinks
 import (
 	"encoding/csv"
 	"fmt"
-	"io"
-
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
+	"io"
+	"strconv"
+	"strings"
 )
 
 type CsvWriter struct {
@@ -50,7 +51,12 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		if v.Val == nil {
 			record[i] = "nil"
 		} else {
-			record[i] = fmt.Sprintf("%v", v.Val)
+			if val, ok := v.Val.(float64); ok {
+				s := strings.TrimRight(strconv.FormatFloat(val, 'f', 3, 64), "0")
+				record[i] = strings.TrimRight(s, ".")
+			} else {
+				record[i] = fmt.Sprintf("%v", v.Val)
+			}
 		}
 	}
 

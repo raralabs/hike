@@ -1,7 +1,10 @@
 package sinks
 
 import (
+	"fmt"
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -56,10 +59,16 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 					j := 0
 					for _, h := range cw.header {
 						v := cw.records[h][i].Value()
+						var value interface{}
 						if v == nil {
-							v = "nil"
+							value = "nil"
+						} else if val, ok := v.(float64); ok {
+							s := strings.TrimRight(strconv.FormatFloat(val, 'f', 3, 64), "0")
+							value = strings.TrimRight(s, ".")
+						} else {
+							value = fmt.Sprintf("%v", v)
 						}
-						row[j] = v
+						row[j] = value
 						j++
 					}
 					cw.tw.AppendRow(row)
