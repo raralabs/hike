@@ -50,8 +50,6 @@ func TestCommands(t *testing.T) {
 		| dcount(SepalLengthCm) as DCount_of_SepalLengthCm
 		by Species
 		| count() by DCount_of_SepalLengthCm
-		| batch()
-		| filter(Count > 0)
 		`},
 	}
 

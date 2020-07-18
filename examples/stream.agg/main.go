@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"log"
 	"os"
 	"time"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/ext/transforms/doFn"
@@ -42,7 +42,7 @@ func main() {
 	del := delay.AddProcessor(opts, doFn.DelayFunction(10*time.Millisecond), "path1")
 
 	//Count Last Names
-	count := templates.NewCount("Count", func(m map[string]interface{}) bool {
+	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
 		return true
 	})
 	after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent []*message.OrderedContent) {

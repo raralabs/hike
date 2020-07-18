@@ -8,7 +8,7 @@ import (
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
+	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
 
@@ -153,20 +153,8 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 					return false
 				}
-				doneFunc := func(m message.Msg, prc pipeline.IProcessorForExecutor, contents []*message.OrderedContent) {
 
-					for _, c := range contents {
-						prc.Result(m, c, nil)
-					}
-
-					// Send eof if it is the end
-					if checkEof(m) {
-						prc.Result(m, m.Content(), nil)
-						prc.Done()
-					}
-				}
-
-				proc = stg.AddProcessor(opts, doFn.BatchFunction(doneCheck, doneFunc), routeParam)
+				proc = stg.AddProcessor(opts, doFn.BatchAgg(doneCheck), routeParam)
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)
@@ -194,7 +182,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			for _, ags := range aggFuncs {
 				switch ag := ags.(type) {
 				case Count:
-					cnt := templates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
+					cnt := aggregates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -210,7 +198,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, cnt)
 
 				case Max:
-					mx := templates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -226,7 +214,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, mx)
 
 				case Min:
-					mn := templates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -242,7 +230,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, mn)
 
 				case Avg:
-					avg := templates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					avg := aggregates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -258,7 +246,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, avg)
 
 				case Sum:
-					sum := templates.NewSum(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					sum := aggregates.NewSum(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -274,7 +262,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, sum)
 
 				case Variance:
-					variance := templates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					variance := aggregates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -290,7 +278,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, variance)
 
 				case DistinctCount:
-					variance := templates.NewDCount(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					variance := aggregates.NewDCount(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -306,7 +294,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, variance)
 
 				case Mode:
-					variance := templates.NewMode(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
+					variance := aggregates.NewMode(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
 								return false
@@ -322,7 +310,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, variance)
 
 				case Quantile:
-					quantile := templates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
+					quantile := aggregates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -339,7 +327,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, quantile)
 
 				case Covariance:
-					cov := templates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
+					cov := aggregates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -356,7 +344,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, cov)
 
 				case Correlation:
-					corr := templates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
+					corr := aggregates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {
@@ -373,7 +361,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 					aggs = append(aggs, corr)
 
 				case PValue:
-					pval := templates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
+					pval := aggregates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
 								if v == true {

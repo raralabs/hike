@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
+	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"log"
 	"os"
 	"time"
-
-	"github.com/raralabs/canal/ext/transforms/aggregates/templates"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
@@ -69,7 +68,7 @@ func main() {
 	f1 := filt.AddProcessor(opts, doFn.FilterFunction(ageFilt), "path2")
 
 	// Count Last Names
-	count := templates.NewCount("Count", func(m map[string]interface{}) bool {
+	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
 		return true
 	})
 	aggs := []agg.IAggFuncTemplate{count}
