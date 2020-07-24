@@ -51,6 +51,13 @@ func TestCommands(t *testing.T) {
 		by Species
 		| count() by DCount_of_SepalLengthCm
 		`},
+		{"iris_out4.csv", "iris_out4.tmp.csv", `
+		file(iris.csv)
+		| dcount(SepalLengthCm) as DCount_of_SepalLengthCm
+		by Species
+		| count() by DCount_of_SepalLengthCm
+		| filter(DCount_of_SepalLengthCm > 20)
+		`},
 	}
 
 	for _, tt := range tsts {
