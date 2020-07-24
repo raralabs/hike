@@ -156,11 +156,13 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent []*message.OrderedContent) {
 
 				contents := m.Content()
-				if v, ok := contents.Get("eof"); ok {
-					if v.Val == true {
-						proc.Result(m, contents, nil)
-						proc.Done()
-						return
+				if contents != nil {
+					if v, ok := contents.Get("eof"); ok {
+						if v.Val == true {
+							proc.Result(m, contents, nil)
+							proc.Done()
+							return
+						}
 					}
 				}
 				for i := range content {
@@ -440,37 +442,3 @@ func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastPr
 
 	snk.ReceiveFrom(routeParam, lastProc)
 }
-
-/*
-
-	n := doJob.Num
-	checkEof := func(m message.Msg) bool {
-		if v, ok := m.Content().Get("eof"); ok {
-			if v.Val == true {
-				return true
-			}
-		}
-		return false
-	}
-	doneCheck := func(m message.Msg) bool {
-		if n < 0 {
-			return checkEof(m)
-		}
-
-		return false
-	}
-	doneFunc := func(m message.Msg, prc pipeline.IProcessorForExecutor, contents []*message.OrderedContent) {
-
-		for _, c := range contents {
-			prc.Result(m, c, nil)
-		}
-
-		// Send eof if it is the end
-		if checkEof(m) {
-			prc.Result(m, m.Content(), nil)
-			prc.Done()
-		}
-	}
-
-	proc = stg.AddProcessor(opts, doFn.BatchFunction(doneCheck, doneFunc), routeParam)
- */
