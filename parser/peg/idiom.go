@@ -3723,7 +3723,7 @@ func (c *current) onMedianAgg1(field, weight, args, alias interface{}) (interfac
 	}
 
 	if name == "" {
-		name = "Median"
+		name = "median"
 	}
 
 	fld, _ := cast.TryString(field)
@@ -3767,9 +3767,9 @@ func (c *current) onQuartileAgg1(field, weight, qth, args, alias interface{}) (i
 
 	if name == "" {
 		if trail, ok := posMap[int(q)]; ok {
-			name = fmt.Sprintf("%v%s Quartile", q, trail)
+			name = fmt.Sprintf("%v%s quartile", q, trail)
 		} else {
-			name = fmt.Sprintf("%vth Quartile", q)
+			name = fmt.Sprintf("%vth quartile", q)
 		}
 	}
 

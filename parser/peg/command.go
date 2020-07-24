@@ -99,9 +99,11 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			doneFunc := func(m message.Msg) bool {
 				content := m.Content()
 
-				if v, ok := content.Get("eof"); ok {
-					if v.Val == true {
-						return true
+				if content != nil {
+					if v, ok := content.Get("eof"); ok {
+						if v.Val == true {
+							return true
+						}
 					}
 				}
 				return false
@@ -110,7 +112,11 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 			switch doJob := s.Function.(type) {
 			case Filter:
 				proc = stg.AddProcessor(opts, doFn.FilterFunction(func(m message.Msg) (bool, bool, error) {
+
 					content := m.Content()
+					if content == nil {
+						return true, false, nil
+					}
 
 					if v, ok := content.Get("eof"); ok {
 						if v.Val == true {
@@ -137,24 +143,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				proc = stg.AddProcessor(opts, doFn.SortFunction(fld, doneFunc), routeParam)
 
 			case Batch:
-				n := doJob.Num
-				checkEof := func(m message.Msg) bool {
-					if v, ok := m.Content().Get("eof"); ok {
-						if v.Val == true {
-							return true
-						}
-					}
-					return false
-				}
-				doneCheck := func(m message.Msg) bool {
-					if n < 0 {
-						return checkEof(m)
-					}
-
-					return false
-				}
-
-				proc = stg.AddProcessor(opts, doFn.BatchAgg(doneCheck), routeParam)
+				proc = stg.AddProcessor(opts, doFn.BatchAgg(doneFunc), routeParam)
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)
@@ -451,3 +440,37 @@ func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastPr
 
 	snk.ReceiveFrom(routeParam, lastProc)
 }
+
+/*
+
+	n := doJob.Num
+	checkEof := func(m message.Msg) bool {
+		if v, ok := m.Content().Get("eof"); ok {
+			if v.Val == true {
+				return true
+			}
+		}
+		return false
+	}
+	doneCheck := func(m message.Msg) bool {
+		if n < 0 {
+			return checkEof(m)
+		}
+
+		return false
+	}
+	doneFunc := func(m message.Msg, prc pipeline.IProcessorForExecutor, contents []*message.OrderedContent) {
+
+		for _, c := range contents {
+			prc.Result(m, c, nil)
+		}
+
+		// Send eof if it is the end
+		if checkEof(m) {
+			prc.Result(m, m.Content(), nil)
+			prc.Done()
+		}
+	}
+
+	proc = stg.AddProcessor(opts, doFn.BatchFunction(doneCheck, doneFunc), routeParam)
+ */

@@ -497,7 +497,7 @@ MedianAgg <- "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," 
     }
 
     if name == "" {
-        name = "Median"
+        name = "median"
     }
 
     fld, _ := cast.TryString(field)
@@ -535,9 +535,9 @@ QuartileAgg <- "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ 
 
     if name == "" {
         if trail, ok := posMap[int(q)]; ok {
-            name = fmt.Sprintf("%v%s Quartile", q, trail)
+            name = fmt.Sprintf("%v%s quartile", q, trail)
         } else {
-            name = fmt.Sprintf("%vth Quartile", q)
+            name = fmt.Sprintf("%vth quartile", q)
         }
     }
 
