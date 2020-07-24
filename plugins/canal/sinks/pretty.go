@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/raralabs/canal/core/transforms/agg"
+	"github.com/raralabs/canal/utils/extract"
+
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 
@@ -19,130 +22,98 @@ type PrettyPrint struct {
 	tw          table.Writer
 	maxRows     uint64
 
-	header  []string
-	records map[string][]*message.MsgFieldValue
+	batch *agg.Aggregator
+	done  func(m message.Msg, proc pipeline.IProcessorForExecutor)
 }
 
 func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
-	return &PrettyPrint{
+
+	pp := &PrettyPrint{
 		name:        "Pretty Printer",
 		writer:      w,
 		firstRecord: true,
 		tw:          table.NewWriter(),
 		maxRows:     maxRows,
-
-		records: make(map[string][]*message.MsgFieldValue),
 	}
+
+	return pp
 }
 
 func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
 
-	content := m.Content()
-	//fmt.Println(content, m.PrevContent())
-
-	if eof, ok := content.Get("eof"); ok {
-		if eof.Val == true {
-
-			row := make([]interface{}, len(cw.header))
-			for i, h := range cw.header {
-				row[i] = h
-			}
-			cw.tw.AppendHeader(row)
-
-			numRecords := uint64(0)
-
-			if len(cw.header) != 0 {
-				depth := len(cw.records[cw.header[0]])
-
-				for i := 0; i < depth; i++ {
-					row := make([]interface{}, len(cw.records))
-					j := 0
-					for _, h := range cw.header {
-						v := cw.records[h][i].Value()
-						var value interface{}
-						if v == nil {
-							value = "nil"
-						} else if val, ok := v.(float64); ok {
-							s := strings.TrimRight(strconv.FormatFloat(val, 'f', 3, 64), "0")
-							value = strings.TrimRight(s, ".")
-						} else {
-							value = fmt.Sprintf("%v", v)
-						}
-						row[j] = value
-						j++
-					}
-					cw.tw.AppendRow(row)
-
-					numRecords++
-					if numRecords > cw.maxRows {
-						break
-					}
-				}
-			}
-
-			cw.writer.Write([]byte(cw.tw.Render()))
-			cw.writer.Write([]byte("\n"))
-
-			if numRecords > cw.maxRows {
-				cw.writer.Write([]byte("...and more.\n"))
-			}
-
-			proc.Done()
-			return false
-		}
-	}
+	//fmt.Println(m.Content(), m.PrevContent())
 
 	if cw.firstRecord {
-		cw.header = make([]string, content.Len())
-		i := 0
-		for e := content.First(); e != nil; e = e.Next() {
-			k, _ := e.Value.(string)
-			cw.header[i] = k
-			i++
-		}
-		cw.firstRecord = false
-	}
+		content := m.Content()
+		if content != nil {
+			groups := extract.Columns(content)
 
-	depth := 0
-	if len(cw.header) != 0 {
-		depth = len(cw.records[cw.header[0]])
-	}
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, contents, prevContents []*message.OrderedContent) {
 
-	pContent := m.PrevContent()
-	if pContent != nil {
-		for i := 0; i < depth; i++ {
-			replace := true
-			for _, h := range cw.header {
-				v1, ok1 := cw.records[h]
-				v2, ok2 := pContent.Get(h)
+				if content := m.Content(); content != nil {
+					if eof, ok := content.Get("eof"); ok {
+						if eof.Val == true {
+							// Write header
+							row := make([]interface{}, len(groups))
+							for i, g := range groups {
+								row[i] = g
+							}
+							cw.tw.AppendHeader(row)
 
-				if !ok1 || !ok2 {
-					goto breakLoop
-				}
+							// Write maxRows entries
+							numRecords := uint64(0)
+							entries := cw.batch.Entries()
+							for _, e := range entries {
+								row := make([]interface{}, len(groups))
+								for i, g := range groups {
+									val, _ := e.Get(g)
+									v := val.Value()
 
-				if !(v1[i].Value() == v2.Value() && v1[i].ValueType() == v2.ValueType()) {
-					replace = false
-				}
+									var value interface{}
+									if v == nil {
+										value = "nil"
+									} else if val, ok := v.(float64); ok {
+										s := strings.TrimRight(strconv.FormatFloat(val, 'f', 3, 64), "0")
+										value = strings.TrimRight(s, ".")
+									} else {
+										value = fmt.Sprintf("%v", v)
+									}
 
-				if !replace {
-					break
+									row[i] = value
+								}
+								cw.tw.AppendRow(row)
+
+								numRecords++
+								if numRecords > cw.maxRows {
+									break
+								}
+							}
+
+							cw.writer.Write([]byte(cw.tw.Render()))
+							cw.writer.Write([]byte("\n"))
+
+							if numRecords > cw.maxRows {
+								cw.writer.Write([]byte("...and more.\n"))
+							}
+
+							proc.Done()
+						}
+					}
 				}
 			}
 
-			if replace {
-				for _, h := range cw.header {
-					val, _ := content.Get(h)
-					cw.records[h][i] = val
-				}
-				return false
+			cw.batch = agg.NewAggregator([]agg.IAggFuncTemplate{}, after, groups...)
+			cw.firstRecord = false
+
+			cw.done = func(m message.Msg, proc pipeline.IProcessorForExecutor) {
+				after(m, proc, nil, nil)
 			}
 		}
 	}
-breakLoop:
-	for _, k := range cw.header {
-		if val, ok := content.Get(k); ok {
-			cw.records[k] = append(cw.records[k], val)
-		}
+
+	if !cw.firstRecord {
+		cw.batch.AggFunc(m, &struct{}{})
+		cw.done(m, proc)
 	}
 
 	return false
