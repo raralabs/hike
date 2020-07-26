@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/n-is/go-wm/wm"
+	"github.com/raralabs/go-wm/wm"
 )
 
 func WSMode(f func(string) string, project func(*wm.Project)) {

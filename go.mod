@@ -14,7 +14,7 @@ require (
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
-	github.com/n-is/go-wm v0.0.0-20200726114822-e357db8551a6
+	github.com/raralabs/go-wm v0.0.0-20200726114822-e357db8551a6
 	github.com/peterh/liner v1.2.0
 	github.com/raralabs/canal v0.0.0-20200724134055-de66fb2fa95e
 	github.com/stretchr/testify v1.5.1
