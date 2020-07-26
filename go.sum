@@ -184,6 +184,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/raralabs/canal v0.0.0-20200724134055-de66fb2fa95e h1:vzNYbhAUGWxLEkIOUlvwCEPVeKX68WMtU4j8da7N6uc=
 github.com/raralabs/canal v0.0.0-20200724134055-de66fb2fa95e/go.mod h1:kdj2R4fXVXG7LfFd8Jm9cSxs91hSM6tTz6yVVe9ixeA=
+github.com/raralabs/canal v0.0.0-20200726173904-f3968ff5c536 h1:KhPsWNfkSkNHrAVs3DT1PUE5C0LPDCElD5nNq93auxo=
+github.com/raralabs/canal v0.0.0-20200726173904-f3968ff5c536/go.mod h1:nZ/r3v8crCuKB4V5AYUPmASLGrz9iNQbyqOtltlSsw0=
 github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d h1:y+yzi7yHJf8QFJ8yxhpkcVaHRNowWFMa2zKWqdpD3xI=
 github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d/go.mod h1:GsRmJsUa1ZPJO4B4Gt+DJRItiA3PXi3zTE1WH7a0BRo=
 github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498/go.mod h1:6lkG1x+13OShEf0EaOCaTQYyB7d5nSbb181KtjlS+84=

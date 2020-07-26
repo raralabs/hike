@@ -144,6 +144,11 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 			case Batch:
 				proc = stg.AddProcessor(opts, doFn.BatchAgg(doneFunc), routeParam)
+
+			case Enrich:
+				if expr := doJob.Expr; expr != nil {
+					proc = stg.AddProcessor(opts, doFn.EnrichFunction(doJob.Field, expr, doneFunc), routeParam)
+				}
 			}
 
 			stg.ReceiveFrom(routeParam, lastProc)

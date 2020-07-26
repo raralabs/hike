@@ -2,6 +2,8 @@ package peg
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/raralabs/canal/utils/cast"
 )
@@ -33,4 +35,39 @@ func parseAggArgs(alias interface{}, flt interface{}) (string, Filter, error) {
 		}
 	}
 	return name, filter, nil
+}
+
+func parseMathExpr(first, rest interface{}) string {
+	var str strings.Builder
+
+	if f, ok := cast.TryString(first); ok {
+		str.WriteString(f)
+	} else {
+		str.WriteString(fmt.Sprintf("%v", first))
+	}
+
+	rst := cast.ToIfaceSlice(rest)
+	for _, r := range rst {
+		v := cast.ToIfaceSlice(r)
+
+		str.WriteString(" ")
+		op, ok := cast.TryString(v[1])
+		if ok {
+			str.WriteString(op)
+		} else {
+			str.WriteString(fmt.Sprintf("%v", v[1]))
+		}
+
+		str.WriteString(" ")
+		rt, ok := cast.TryString(v[3])
+		if ok {
+			str.WriteString(rt)
+		} else {
+			str.WriteString(fmt.Sprintf("%v", v[3]))
+		}
+	}
+
+	fmt.Println(str.String())
+
+	return str.String()
 }

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/raralabs/go-wm/wm"
 	"github.com/peterh/liner"
+	"github.com/raralabs/go-wm/wm"
 	"github.com/raralabs/hike/cli"
 	"github.com/raralabs/hike/parser/peg"
 )

@@ -3,6 +3,7 @@ package peg
 import (
 	"time"
 
+	"github.com/Knetic/govaluate"
 	"github.com/raralabs/canal/core/transforms/event/poll"
 )
 
@@ -75,6 +76,11 @@ type Sort struct {
 
 type Batch struct {
 	Num int64
+}
+
+type Enrich struct {
+	Field string
+	Expr  *govaluate.EvaluableExpression
 }
 
 // Aggregator Functions

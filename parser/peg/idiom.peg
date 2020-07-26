@@ -16,10 +16,31 @@ Main <- agg:Job rest:(_ "|" _ Job)* {
     return jobs, nil
 }
 
+// Math Grammar
+MExpr <- first:MValue rest:(_ MOps _ MValue)* {
+        return parseMathExpr(first, rest), nil
+}
+
+MValue <- val:(Float / Number / String_Type1 / Variable_Value / Variable_Literal / MFactor) {
+        return val, nil
+}
+
+MOps <- "%" / "-" / "+" / "*" / "/" {
+        return string(c.text), nil
+}
+
+MFactor <- '(' ex:MExpr ')' {
+
+    e, _ := cast.TryString(ex)
+    return "(" + e + ")", nil
+} / ex:MExpr {
+    return ex, nil
+}
+
 
 // Basic Grammar
 
-Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable_Value / Number))* {
+Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable_Value / Float / Number))* {
         return string(c.text), nil
 }
 
@@ -96,7 +117,7 @@ FileName <- Variable ("." ext:Variable)* {
     return nm, nil
 }
 
-DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
+DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo / EnrichDo) {
         return DoNodeJob{Function: job}, nil
 }
 
@@ -273,6 +294,21 @@ BatchDo <- "batch(" _ num:Number? _ ")" {
         n, _ = cast.TryInt(num)
     }
     return Batch{Num: n}, nil
+}
+
+// Enrich Grammar
+EnrichDo <- "enrich " _ fld:Variable _ "=" _ expr:MExpr {
+    field, _ := cast.TryString(fld)
+    ex, _ := cast.TryString(expr)
+
+    fmt.Println(ex)
+
+    expression, err := govaluate.NewEvaluableExpression(ex)
+    if err != nil {
+        panic(err)
+    }
+
+    return Enrich{Field: field, Expr: expression}, nil
 }
 
 

@@ -1,7 +1,13 @@
 package main
 
-import "github.com/raralabs/hike/cli/cliner"
+import (
+	"github.com/raralabs/go-wm/wm"
+	"github.com/raralabs/hike/cli/cliner"
+)
 
 func main() {
-	cliner.Liner(nil)
+	p := &wm.Project{
+		History: ".tmp.cmd_history",
+	}
+	cliner.Liner(p)
 }
