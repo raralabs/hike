@@ -29,6 +29,6 @@ func WSMode(f func(string) string, project func(*wm.Project)) {
 		pr.Save()
 
 	case "remove":
-
+		log.Panicln("No support")
 	}
 }
