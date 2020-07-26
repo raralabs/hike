@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"log"
 	"os"
 	"time"
+
+	"github.com/raralabs/canal/ext/transforms/aggregates"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/transforms/agg"
@@ -66,7 +67,7 @@ func main() {
 	cnt := counter.AddProcessor(opts, aggregator.Function(), "path2")
 
 	//Count
-	genAgg := templates.NewAvg("Generic", "Count", func(m map[string]interface{}) bool {
+	genAgg := aggregates.NewAvg("Generic", "Count", func(m map[string]interface{}) bool {
 		return true
 	})
 	aggs2 := []agg.IAggFuncTemplate{genAgg}

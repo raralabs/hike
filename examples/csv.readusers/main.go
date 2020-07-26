@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"log"
 	"os"
 	"time"
+
+	"github.com/raralabs/canal/ext/transforms/aggregates"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"

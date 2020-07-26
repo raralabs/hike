@@ -3,10 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
-	"github.com/raralabs/hike/builder"
-	"github.com/raralabs/hike/parser"
 	"strings"
 	"time"
+
+	"github.com/raralabs/hike/builder"
+	"github.com/raralabs/hike/parser"
 )
 
 func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
