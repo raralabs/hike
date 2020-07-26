@@ -23,7 +23,7 @@ Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable_Value / Number))*
         return string(c.text), nil
 }
 
-Value <- val:(Number / String_Type1 / Variable_Literal / Variable_Value) {
+Value <- val:(Float / Number / String_Type1 / Variable_Literal / Variable_Value) {
         return val, nil
 }
 
