@@ -19,23 +19,23 @@ func TestCommands(t *testing.T) {
 		{"iris_out1.csv", "iris_out1.tmp.csv", `
 		file(iris.csv)
 		| count() as Count,
-		 max(SepalLengthCm) as Max_of_SepalLengthCm,
-		 min(SepalLengthCm) as Min_of_SepalLengthCm,
-		 median(SepalLengthCm) as Median_of_SepalLengthCm,
-		 var(SepalLengthCm) as Var_of_SepalLengthCm,
-		 avg(SepalLengthCm) as Avg_of_SepalLengthCm,
-		 dcount(SepalLengthCm) as DCount_of_SepalLengthCm
+		 Max_of_SepalLengthCm = max(SepalLengthCm),
+		 Min_of_SepalLengthCm = min(SepalLengthCm),
+		 Median_of_SepalLengthCm = median(SepalLengthCm),
+		 Var_of_SepalLengthCm = var(SepalLengthCm),
+		 Avg_of_SepalLengthCm = avg(SepalLengthCm),
+		 DCount_of_SepalLengthCm = dcount(SepalLengthCm)
 		by Species
 		`},
 		{"iris_out2.csv", "iris_out2.tmp.csv", `
 		file(iris.csv)
 		| count() as Count,
-		 max(SepalLengthCm) as Max_of_SepalLengthCm,
-		 min(SepalLengthCm) as Min_of_SepalLengthCm,
-		 median(SepalLengthCm) as Median_of_SepalLengthCm,
-		 var(SepalLengthCm) as Var_of_SepalLengthCm,
-		 avg(SepalLengthCm) as Avg_of_SepalLengthCm,
-		 dcount(SepalLengthCm) as DCount_of_SepalLengthCm
+		 Max_of_SepalLengthCm = max(SepalLengthCm),
+		 Min_of_SepalLengthCm = min(SepalLengthCm),
+		 Median_of_SepalLengthCm = median(SepalLengthCm),
+		 Var_of_SepalLengthCm = var(SepalLengthCm),
+		 Avg_of_SepalLengthCm = avg(SepalLengthCm),
+		 DCount_of_SepalLengthCm = dcount(SepalLengthCm)
 		by Species
 		| count(),
 		 max(Max_of_SepalLengthCm),
@@ -47,13 +47,13 @@ func TestCommands(t *testing.T) {
 		`},
 		{"iris_out3.csv", "iris_out3.tmp.csv", `
 		file(iris.csv)
-		| dcount(SepalLengthCm) as DCount_of_SepalLengthCm
+		| DCount_of_SepalLengthCm = dcount(SepalLengthCm)
 		by Species
 		| count() by DCount_of_SepalLengthCm
 		`},
 		{"iris_out4.csv", "iris_out4.tmp.csv", `
 		file(iris.csv)
-		| dcount(SepalLengthCm) as DCount_of_SepalLengthCm
+		| DCount_of_SepalLengthCm = dcount(SepalLengthCm)
 		by Species
 		| count() by DCount_of_SepalLengthCm
 		| filter(DCount_of_SepalLengthCm > 20)
