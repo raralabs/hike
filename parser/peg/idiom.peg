@@ -167,7 +167,7 @@ PlotG <- "plot " _ widget:(BarWidget) {
     return SinkJob{Type: "plot", Args: widget}, nil
 }
 
-BarWidget <- "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" _ alias:AliasG? {
+BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {
 
     title := "Bar Chart"
 	if alias != nil {
@@ -314,7 +314,7 @@ EnrichDo <- "enrich " _ fld:Variable _ "=" _ expr:MExpr {
 
 // Aggregator Functions Grammar
 
-CountAgg <- "count(" _ args:FilterMulti? _ ")" _ alias:AliasG?  {
+CountAgg <- alias:EqAliasG? _ "count(" _ args:FilterMulti? _ ")"  {
 
     name, filter, err := parseAggArgs(alias, args)
     if err != nil {
@@ -324,7 +324,7 @@ CountAgg <- "count(" _ args:FilterMulti? _ ")" _ alias:AliasG?  {
     return Count{Alias: name, Filter: filter}, nil
 }
 
-MaxAgg <- "max(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG?  {
+MaxAgg <- alias:EqAliasG? _ "max(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -346,7 +346,7 @@ MaxAgg <- "max(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Max{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-MinAgg <- "min(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+MinAgg <- alias:EqAliasG? _ "min(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -368,7 +368,7 @@ MinAgg <- "min(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Min{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-AvgAgg <- "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+AvgAgg <- alias:EqAliasG? _ "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -390,7 +390,7 @@ AvgAgg <- "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Avg{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-SumAgg <- "sum(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+SumAgg <- alias:EqAliasG? _ "sum(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -412,7 +412,7 @@ SumAgg <- "sum(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Sum{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-VarAgg <- "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+VarAgg <- alias:EqAliasG? _ "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -434,7 +434,7 @@ VarAgg <- "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Alia
     return Variance{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-DistinctCountAgg <- "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+DistinctCountAgg <- alias:EqAliasG? _ "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -456,7 +456,7 @@ DistinctCountAgg <- "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")"
     return DistinctCount{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-ModeAgg <- "mode(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+ModeAgg <- alias:EqAliasG? _ "mode(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -478,7 +478,7 @@ ModeAgg <- "mode(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:Al
     return Mode{Alias: name, Field: fld, Filter: filter}, nil
 }
 
-QuantileAgg <- "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Float _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+QuantileAgg <- alias:EqAliasG? _ "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Float _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -508,7 +508,7 @@ QuantileAgg <- "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ 
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: q}, nil
 }
 
-MedianAgg <- "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+MedianAgg <- alias:EqAliasG? _ "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -540,7 +540,7 @@ MedianAgg <- "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," 
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: float64(0.5)}, nil
 }
 
-QuartileAgg <- "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Number _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+QuartileAgg <- alias:EqAliasG? _ "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Number _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -586,7 +586,7 @@ QuartileAgg <- "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ 
     return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: qn}, nil
 }
 
-CovAgg <- "cov(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+CovAgg <- alias:EqAliasG? _ "cov(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -609,7 +609,7 @@ CovAgg <- "cov(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterM
     return Covariance{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
 }
 
-CorrAgg <- "correlation(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+CorrAgg <- alias:EqAliasG? _ "correlation(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -632,7 +632,7 @@ CorrAgg <- "correlation(" _ field1:Variable _ "," _ field2:Variable _ args:("," 
     return Correlation{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
 }
 
-PValueAgg <- "pvalue(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" _ alias:AliasG? {
+PValueAgg <- alias:EqAliasG? _ "pvalue(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
 
     var name string
     var filter Filter
@@ -658,6 +658,13 @@ PValueAgg <- "pvalue(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ F
 // Alias Grammar
 
 AliasG <- _ "as" _ alias:Variable {
+    if name, ok := cast.TryString(alias); ok {
+        return name, nil
+    }
+    return nil, errors.New("Could not decode alias")
+}
+
+EqAliasG <- alias:Variable _ "=" {
     if name, ok := cast.TryString(alias); ok {
         return name, nil
     }
