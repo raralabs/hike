@@ -67,7 +67,5 @@ func parseMathExpr(first, rest interface{}) string {
 		}
 	}
 
-	fmt.Println(str.String())
-
 	return str.String()
 }

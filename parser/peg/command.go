@@ -111,21 +111,7 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 
 			switch doJob := s.Function.(type) {
 			case Filter:
-				proc = stg.AddProcessor(opts, doFn.FilterFunction(func(m message.Msg) (bool, bool, error) {
-
-					content := m.Content()
-					if content == nil {
-						return true, false, nil
-					}
-
-					if v, ok := content.Get("eof"); ok {
-						if v.Val == true {
-							return true, true, nil
-						}
-					}
-					match, err := doJob(m.Values())
-					return match, false, err
-				}), routeParam)
+				proc = stg.AddProcessor(opts, doFn.FilterFunction(doJob, doneFunc), routeParam)
 
 			case Select:
 				fields := doJob.Fields

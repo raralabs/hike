@@ -21,7 +21,7 @@ MExpr <- first:MValue rest:(_ MOps _ MValue)* {
         return parseMathExpr(first, rest), nil
 }
 
-MValue <- val:(Float / Number / String_Type1 / Variable_Value / Variable_Literal / MFactor) {
+MValue <- val:(Float / Number / String_Type1 / Variable / MFactor) {
         return val, nil
 }
 
@@ -40,25 +40,16 @@ MFactor <- '(' ex:MExpr ')' {
 
 // Basic Grammar
 
-Expr <- Variable ( _ ("%" / "-" / "+" / "*" / "/") _ (Variable_Value / Float / Number))* {
-        return string(c.text), nil
+Expr <- first:Value rest:(_ MOps _ Value)* {
+        return parseMathExpr(first, rest), nil
 }
 
-Value <- val:(Float / Number / String_Type1 / Variable_Literal / Variable_Value) {
+Value <- val:(Float / Number / String_Type1 / Variable) {
         return val, nil
 }
 
 Variable <- Letter (Integer / Letter/ "_")* {
         return string(c.text), nil
-}
-
-Variable_Value <- "$" vrbl:Variable {
-    return vrbl, nil
-}
-
-Variable_Literal <- vrbl:Variable {
-    vari, _ := cast.TryString(vrbl)
-    return cast.GetStringValue(vari), nil
 }
 
 String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
@@ -102,7 +93,7 @@ EOF <- !.
 
 // Jobs
 
-Job <- FileJobG / DoJobG / AggJobG / SinkJobG
+Job <- FileJobG / DoJobG / MapJobG / AggJobG / SinkJobG
 
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
@@ -117,11 +108,15 @@ FileName <- Variable ("." ext:Variable)* {
     return nm, nil
 }
 
-DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo / EnrichDo) {
+DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
         return DoNodeJob{Function: job}, nil
 }
 
-AggJobG <- job:AggJobs rest:("," _ AggJobs)* params:AggGroupBy? {
+MapJobG <- "map" _ job:(EnrichDo) {
+        return DoNodeJob{Function: job}, nil
+}
+
+AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         jobSlices := cast.ToIfaceSlice(rest)
         jobs := []interface{}{job}
 
@@ -139,7 +134,7 @@ AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
            / CovAgg / CorrAgg / PValueAgg
 
-AggGroupBy <- _ "by " _ param:Variable rest:("," _ Variable)* {
+AggGroupBy <- _ "by" _ param:Variable rest:("," _ Variable)* {
         p1, _ := cast.TryString(param)
         params := []string{p1}
 
@@ -163,7 +158,7 @@ BlackHoleG <- "blackhole()" {
         return SinkJob{Type: "blackhole"}, nil
 }
 
-PlotG <- "plot " _ widget:(BarWidget) {
+PlotG <- "plot" _ widget:(BarWidget) {
     return SinkJob{Type: "plot", Args: widget}, nil
 }
 
@@ -297,11 +292,9 @@ BatchDo <- "batch(" _ num:Number? _ ")" {
 }
 
 // Enrich Grammar
-EnrichDo <- "enrich " _ fld:Variable _ "=" _ expr:MExpr {
+EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
     field, _ := cast.TryString(fld)
     ex, _ := cast.TryString(expr)
-
-    fmt.Println(ex)
 
     expression, err := govaluate.NewEvaluableExpression(ex)
     if err != nil {
