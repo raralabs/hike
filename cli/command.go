@@ -12,6 +12,7 @@ import (
 
 func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
 	commandBuilder := builder.NewCommand()
+	streamBuilder := builder.NewStreamCommand()
 	pipelineId := uint32(1)
 
 	promptText := "Cmd>> "
@@ -31,7 +32,13 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 			continue
 		}
 
-		command, done, err := commandBuilder.Add(cmd)
+		stream, err := streamBuilder.Build(cmd)
+		if err != nil {
+			fmt.Println("Error: ", err)
+			continue
+		}
+
+		command, done, err := commandBuilder.Add(stream)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -47,6 +54,7 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 		lastCommand = command
 		addHistory(cmd)
+		fmt.Println(command)
 
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
