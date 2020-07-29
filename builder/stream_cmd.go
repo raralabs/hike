@@ -3,6 +3,7 @@ package builder
 import (
 	"errors"
 	"strings"
+	"unicode"
 )
 
 type StreamCommand struct {
@@ -43,6 +44,9 @@ func (s *StreamCommand) Build(cmd string) (string, error) {
 	} else {
 		// Check if cmds[0] is a simple variable string
 		// Error if it is.
+		if isVariable(cmds[0]) {
+			return "", errors.New("use of unknown stream")
+		}
 	}
 
 	output := strings.Join(cmds, " ")
@@ -52,4 +56,19 @@ func (s *StreamCommand) Build(cmd string) (string, error) {
 
 	outEnds := strings.Join(ends, " ")
 	return output + " " + outEnds, nil
+}
+
+func isVariable(s string) bool {
+	str := []rune(s)
+	if !(unicode.IsLetter(str[0]) || str[0] == '_') {
+		return false
+	}
+
+	for _, r := range str {
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_') {
+			return false
+		}
+	}
+
+	return true
 }

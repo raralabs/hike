@@ -54,7 +54,6 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 		lastCommand = command
 		addHistory(cmd)
-		fmt.Println(command)
 
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
