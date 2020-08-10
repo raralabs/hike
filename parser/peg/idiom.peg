@@ -75,6 +75,10 @@ Number <- '-'? Integer {
         return strconv.ParseInt(string(c.text), 10, 64)
 }
 
+PositiveNumber <- Integer {
+        return strconv.ParseInt(string(c.text), 10, 64)
+}
+
 Float <- '-'? Integer? "." Integer {
     return strconv.ParseFloat(string(c.text), 64)
 }
@@ -93,11 +97,18 @@ EOF <- !.
 
 // Jobs
 
-Job <- FileJobG / DoJobG / MapJobG / AggJobG / SinkJobG
+Job <- FileJobG / FakeJobG / DoJobG / MapJobG / AggJobG / SinkJobG
 
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
         return FileJob{Filename: fname}, nil
+    }
+    return nil, errors.New("could not decode source file name")
+}
+
+FakeJobG <- _ "fake(" _ numData:PositiveNumber _ ")" {
+    if n, ok := cast.TryInt(numData); ok {
+        return FakeJob{NumData: n}, nil
     }
     return nil, errors.New("could not decode source file name")
 }

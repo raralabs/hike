@@ -98,7 +98,7 @@ func generateCsv(filename string) {
 	if err != nil {
 		log.Panic(err)
 	}
-	// Generate Fake CSV Data
+	// Generate Stream CSV Data
 	choices := map[string][]interface{}{
 		"first_name": {"Madhav", "Shambhu", "Pushpa", "Kumar", "Hero"},
 		"last_name":  {"Mashima", "Dahal", "Poudel", "Rimal", "Amatya", "Shrestha", "Bajracharya"},

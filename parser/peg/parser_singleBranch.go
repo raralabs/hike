@@ -31,14 +31,14 @@ func strIn(strs []string, str string) bool {
 	return false
 }
 
-type command struct {
+type singleBranchParser struct {
 }
 
-func (c *command) Init() {
+func (c *singleBranchParser) Init() {
 	// Build the grammar, generate codes and stuffs in here
 }
 
-func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
+func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
 	stages, err := Parse("", []byte(cmd))
 
 	if err != nil {
@@ -90,6 +90,20 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 				snk.ReceiveFrom(routeParam, lastProc)
 				openedFiles = append(openedFiles, f)
 				useDefaultSink = false
+			}
+
+		case FakeJob:
+			// FileJob can act as both a source or sink depending upon it's placement
+			numData := s.NumData
+
+			// Act as source if at the beginning
+			if i == 0 {
+				log.Printf("[INFO] Generating %d fake data", numData)
+				src := p.AddSource("Fake Data")
+				sp := src.AddProcessor(opts, sources.NewFaker(numData, nil))
+				lastProc = sp
+			} else {
+				log.Println("[ERROR] Generating fake data")
 			}
 
 		case DoNodeJob:
@@ -421,8 +435,8 @@ func (c *command) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline
 	return starter, p, closer
 }
 
-func NewPegCmd() *command {
-	return &command{}
+func NewPegCmd() *singleBranchParser {
+	return &singleBranchParser{}
 }
 
 func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor) {

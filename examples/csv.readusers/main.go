@@ -22,6 +22,8 @@ import (
 const TmpPath = "./tmp/"
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	if err := os.MkdirAll(TmpPath, os.ModePerm); err != nil {
 		log.Panic(err)
 	}
@@ -30,7 +32,7 @@ func main() {
 	opts := pipeline.DefaultProcessorOptions
 
 	filename := TmpPath + "users.csv"
-	generateCsv(filename)
+	//generateCsv(filename)
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -43,30 +45,35 @@ func main() {
 	delay := p.AddTransform("Delay")
 	del := delay.AddProcessor(opts, doFn.DelayFunction(10*time.Millisecond), "path1")
 
-	ageFilt := func(m message.Msg) (bool, bool, error) {
-		match := false
-
+	doneFunc := func(m message.Msg) bool {
 		content := m.Content()
 
-		if v, ok := content.Get("eof"); ok {
-			if v.Val == true {
-				return false, true, nil
+		if content != nil {
+			if v, ok := content.Get("eof"); ok {
+				if v.Val == true {
+					return true
+				}
 			}
 		}
+		return false
+	}
 
-		if rawAge, ok := content.Get("eof"); ok {
-			if age, ok := cast.TryFloat(rawAge.Val); ok {
-				if age > 30 && age < 50 {
+	ageFilt := func(m map[string]interface{}) (bool, error) {
+		match := false
+
+		if rawAge, ok := m["age"]; ok {
+			if age, ok := cast.TryFloat(rawAge); ok {
+				if age > 20 && age < 50 {
 					match = true
 				}
 			}
 		}
 
-		return match, false, nil
+		return match, nil
 	}
 
 	filt := p.AddTransform("Age Filter")
-	f1 := filt.AddProcessor(opts, doFn.FilterFunction(ageFilt), "path2")
+	f1 := filt.AddProcessor(opts, doFn.FilterFunction(ageFilt, doneFunc), "path2")
 
 	// Count Last Names
 	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
@@ -100,7 +107,7 @@ func generateCsv(filename string) {
 	if err != nil {
 		log.Panic(err)
 	}
-	// Generate Fake CSV Data
+	// Generate Stream CSV Data
 	choices := map[string][]interface{}{
 		"first_name": {"Madhav", "Shambhu", "Pushpa", "Kumar", "Hero"},
 		"last_name":  {"Mashima", "Dahal", "Poudel", "Rimal", "Amatya", "Shrestha", "Bajracharya"},

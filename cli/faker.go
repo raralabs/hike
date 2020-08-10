@@ -14,9 +14,9 @@ func FakerMode(fakerFunc func(string) string) {
 	numRows := fakerFunc("NumRows>> ")
 	if rows, ok := cast.TryInt(numRows); ok {
 		generateCsv(fileName, int(rows))
-		fmt.Printf("Fake csv file generation success. File: %s\n", fileName)
+		fmt.Printf("Stream csv file generation success. File: %s\n", fileName)
 	} else {
-		fmt.Println("Fake csv file generation failed.")
+		fmt.Println("Stream csv file generation failed.")
 	}
 }
 
@@ -26,7 +26,7 @@ func generateCsv(filename string, rows int) {
 	if err != nil {
 		log.Panic(err)
 	}
-	// Generate Fake CSV Data
+	// Generate Stream CSV Data
 	choices := map[string][]interface{}{
 		"first_name": {"Madhav", "Shambhu", "Pushpa", "Kumar", "Hero"},
 		"last_name":  {"Mashima", "Dahal", "Poudel", "Rimal", "Amatya", "Shrestha", "Bajracharya"},

@@ -18,6 +18,10 @@ type FileJob struct {
 	Filename string
 }
 
+type FakeJob struct {
+	NumData int64
+}
+
 type DoNodeJob struct {
 	Function interface{}
 }

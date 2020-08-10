@@ -7,6 +7,11 @@ import (
 )
 
 func GetValType(v interface{}) (interface{}, message.FieldValueType) {
+
+	if v == nil {
+		return nil, message.NONE
+	}
+
 	switch val := v.(type) {
 	case bool:
 		return val, message.BOOL
