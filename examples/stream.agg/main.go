@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/raralabs/canal/core/message/content"
 	"log"
 	"os"
 	"time"
@@ -43,10 +44,10 @@ func main() {
 	del := delay.AddProcessor(opts, doFn.DelayFunction(10*time.Millisecond), "path1")
 
 	//Count Last Names
-	count := aggregates.NewCount("Count", func(m map[string]interface{}) bool {
+	count := aggregates.NewCount("count", func(m map[string]interface{}) bool {
 		return true
 	})
-	after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent []*message.OrderedContent) {
+	after := func(m message.Msg, proc pipeline.IProcessorForExecutor, cntnt, pContent []content.IContent) {
 
 		contents := m.Content()
 		if v, ok := contents.Get("eof"); ok {
@@ -56,8 +57,8 @@ func main() {
 				return
 			}
 		}
-		for i := range content {
-			proc.Result(m, content[i], pContent[i])
+		for i := range cntnt {
+			proc.Result(m, cntnt[i], pContent[i])
 		}
 	}
 	aggs := []agg.IAggFuncTemplate{count}
@@ -67,22 +68,23 @@ func main() {
 	cnt := counter.AddProcessor(opts, aggregator.Function(), "path2")
 
 	//Count
-	genAgg := aggregates.NewAvg("Generic", "Count", func(m map[string]interface{}) bool {
-		return true
-	})
-	aggs2 := []agg.IAggFuncTemplate{genAgg}
-	aggregator2 := agg.NewAggregator(aggs2, after)
-
-	genericAgg := p.AddTransform("Generic Agg")
-	gAgg := genericAgg.AddProcessor(opts, aggregator2.Function(), "path3")
+	//genAgg := aggregates.NewAvg("Generic", "Count", func(m map[string]interface{}) bool {
+	//	return true
+	//})
+	//aggs2 := []agg.IAggFuncTemplate{genAgg}
+	//aggregator2 := agg.NewAggregator(aggs2, after)
+	//
+	//genericAgg := p.AddTransform("Generic Agg")
+	//gAgg := genericAgg.AddProcessor(opts, aggregator2.Function(), "path3")
 
 	snk := p.AddSink("CSV Writer")
-	snk.AddProcessor(opts, csvsnk.NewPrettyPrinter(os.Stdout, 100), "sink")
+	order := []string{"count", "last_name"}
+	snk.AddProcessor(opts, csvsnk.NewPrettyPrinter(os.Stdout, 100, order...), "sink")
 
 	delay.ReceiveFrom("path1", sp)
 	counter.ReceiveFrom("path2", del)
-	genericAgg.ReceiveFrom("path3", cnt)
-	snk.ReceiveFrom("sink", gAgg)
+	//genericAgg.ReceiveFrom("path3", cnt)
+	snk.ReceiveFrom("sink", cnt)
 
 	c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 	p.Validate()

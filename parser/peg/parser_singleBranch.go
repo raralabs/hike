@@ -2,13 +2,15 @@ package peg
 
 import (
 	"fmt"
-	sinks2 "github.com/raralabs/canal/ext/sinks"
 	"log"
 	"os"
 
 	"github.com/raralabs/canal/core/message"
+	"github.com/raralabs/canal/core/message/content"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/core/transforms/agg"
+	canalSnk "github.com/raralabs/canal/ext/sinks"
+	canalSrc "github.com/raralabs/canal/ext/sources"
 	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/canal/ext/transforms/doFn"
 	"github.com/raralabs/canal/utils/cast"
@@ -54,6 +56,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 	var lastProc pipeline.IProcessor
 
 	useDefaultSink := true
+	var header []string
 
 	stgs := cast.ToIfaceSlice(stages)
 	for i, stg := range stgs {
@@ -101,7 +104,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			if i == 0 {
 				log.Printf("[INFO] Generating %d fake data", numData)
 				src := p.AddSource("Fake Data")
-				sp := src.AddProcessor(opts, sources.NewFaker(numData, nil))
+				sp := src.AddProcessor(opts, canalSrc.NewFaker(numData, nil))
 				lastProc = sp
 			} else {
 				log.Println("[ERROR] Generating fake data")
@@ -159,7 +162,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, content, pContent []*message.OrderedContent) {
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, cntnt, pContent []content.IContent) {
 
 				contents := m.Content()
 				if contents != nil {
@@ -171,8 +174,8 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 						}
 					}
 				}
-				for i := range content {
-					proc.Result(m, content[i], pContent[i])
+				for i := range cntnt {
+					proc.Result(m, cntnt[i], pContent[i])
 				}
 			}
 
@@ -394,11 +397,12 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			switch s.Type {
 			case "stdout":
 				useDefaultSink = true
+				header = s.Header
 
 			case "blackhole":
 				useDefaultSink = false
 				snk := p.AddSink("Blackhole Sink")
-				snk.AddProcessor(opts, sinks2.NewBlackholeSink(), routeParam)
+				snk.AddProcessor(opts, canalSnk.NewBlackholeSink(), routeParam)
 				snk.ReceiveFrom(routeParam, lastProc)
 
 			default:
@@ -415,7 +419,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 		}
 
 		if i == len(stgs)-1 && useDefaultSink {
-			defaultSink(p, routeParam, lastProc)
+			defaultSink(p, routeParam, lastProc, header...)
 		}
 	}
 	p.Validate()
@@ -446,11 +450,11 @@ func NewPegCmd() *singleBranchParser {
 	return &singleBranchParser{}
 }
 
-func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor) {
+func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor, header ...string) {
 	opts := pipeline.DefaultProcessorOptions
 
 	snk := p.AddSink("Stdout Sink")
-	snk.AddProcessor(opts, sinks.NewPrettyPrinter(os.Stdout, 10), routeParam)
+	snk.AddProcessor(opts, sinks.NewPrettyPrinter(os.Stdout, 10, header...), routeParam)
 
 	snk.ReceiveFrom(routeParam, lastProc)
 }

@@ -69,3 +69,20 @@ func parseMathExpr(first, rest interface{}) string {
 
 	return str.String()
 }
+
+func getParamList(first, rest interface{}) []string {
+	var strs []string
+
+	f, _ := cast.TryString(first)
+	strs = append(strs, f)
+
+	restStrs := cast.ToIfaceSlice(rest)
+	for _, v := range restStrs {
+		str := cast.ToIfaceSlice(v)
+		r, _ := cast.TryString(str[2])
+
+		strs = append(strs, r)
+	}
+
+	return strs
+}

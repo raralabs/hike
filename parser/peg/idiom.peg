@@ -146,26 +146,36 @@ AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
            / CovAgg / CorrAgg / PValueAgg
 
 AggGroupBy <- _ "by" _ param:Variable rest:("," _ Variable)* {
-        p1, _ := cast.TryString(param)
-        params := []string{p1}
+    p1, _ := cast.TryString(param)
+    params := []string{p1}
 
-        restSlice := cast.ToIfaceSlice(rest)
-        for _, v := range restSlice {
-                ps := cast.ToIfaceSlice(v)
-                p2, _ := cast.TryString(ps[2])
-                params = append(params, p2)
-        }
+    restSlice := cast.ToIfaceSlice(rest)
+    for _, v := range restSlice {
+            ps := cast.ToIfaceSlice(v)
+            p2, _ := cast.TryString(ps[2])
+            params = append(params, p2)
+    }
 
-        return params, nil
+    return params, nil
 }
 
 SinkJobG <- StdOutG / BlackHoleG / PlotG
 
-StdOutG <- "stdout()" {
-        return SinkJob{Type: "stdout"}, nil
+StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
+
+    if header, ok := params.([]string); ok {
+        return SinkJob{
+            Type: "stdout",
+            Header: header,
+        }, nil
+    }
+    return SinkJob{
+        Type: "stdout",
+        Header: nil,
+    }, nil
 }
 
-BlackHoleG <- "blackhole()" {
+BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
         return SinkJob{Type: "blackhole"}, nil
 }
 
@@ -673,4 +683,10 @@ EqAliasG <- alias:Variable _ "=" {
         return name, nil
     }
     return nil, errors.New("Could not decode alias")
+}
+
+// Parameter List
+// Variable Parameters Extraction
+VarParamListG <- first:Variable _ rest:("," _ Variable _)* {
+    return getParamList(first, rest), nil
 }
