@@ -2,6 +2,7 @@ package peg
 
 import (
 	"fmt"
+	sinks2 "github.com/raralabs/canal/ext/sinks"
 	"log"
 	"os"
 
@@ -393,6 +394,12 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			switch s.Type {
 			case "stdout":
 				useDefaultSink = true
+
+			case "blackhole":
+				useDefaultSink = false
+				snk := p.AddSink("Blackhole Sink")
+				snk.AddProcessor(opts, sinks2.NewBlackholeSink(), routeParam)
+				snk.ReceiveFrom(routeParam, lastProc)
 
 			default:
 				switch snkJob := s.Args.(type) {
