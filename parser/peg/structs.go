@@ -35,6 +35,7 @@ type AggNodeJob struct {
 type SinkJob struct {
 	Type string
 	Args interface{}
+	Header []string
 }
 
 // Sink Jobs

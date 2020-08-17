@@ -2,6 +2,7 @@ package sinks
 
 import (
 	"fmt"
+	"github.com/raralabs/canal/core/message/content"
 	"io"
 	"strconv"
 	"strings"
@@ -21,12 +22,13 @@ type PrettyPrint struct {
 	firstRecord bool
 	tw          table.Writer
 	maxRows     uint64
+	header      []string
 
 	batch *agg.Aggregator
 	done  func(m message.Msg, proc pipeline.IProcessorForExecutor)
 }
 
-func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
+func NewPrettyPrinter(w io.Writer, maxRows uint64, header ...string) *PrettyPrint {
 
 	pp := &PrettyPrint{
 		name:        "Pretty Printer",
@@ -34,6 +36,7 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64) *PrettyPrint {
 		firstRecord: true,
 		tw:          table.NewWriter(),
 		maxRows:     maxRows,
+		header:      header,
 	}
 
 	return pp
@@ -44,14 +47,19 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 	//fmt.Println(m.Content(), m.PrevContent())
 
 	if cw.firstRecord {
-		content := m.Content()
-		if content != nil {
-			groups := extract.Columns(content)
+		cntnt := m.Content()
+		if cntnt != nil {
+			var groups []string
+			if cw.header == nil || len(cw.header) == 0 {
+				groups = extract.Columns(cntnt)
+			} else {
+				groups = cw.header
+			}
 
-			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, contents, prevContents []*message.OrderedContent) {
+			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, contents, prevContents []content.IContent) {
 
-				if content := m.Content(); content != nil {
-					if eof, ok := content.Get("eof"); ok {
+				if cntnt := m.Content(); cntnt != nil {
+					if eof, ok := cntnt.Get("eof"); ok {
 						if eof.Val == true {
 							// Write header
 							row := make([]interface{}, len(groups))

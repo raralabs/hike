@@ -17,16 +17,21 @@ type CsvWriter struct {
 	header      []string
 }
 
-func NewCsvWriter(w io.Writer) *CsvWriter {
-	return &CsvWriter{name: "FileWriter", writer: csv.NewWriter(w), firstRecord: true}
+func NewCsvWriter(w io.Writer, header ...string) *CsvWriter {
+	return &CsvWriter{
+		name:        "FileWriter",
+		writer:      csv.NewWriter(w),
+		firstRecord: true,
+		header:      header,
+	}
 }
 
 func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
 
-	content := m.Content()
+	contents := m.Content()
 
 	// Check for eof
-	if v, ok := content.Get("eof"); ok {
+	if v, ok := contents.Get("eof"); ok {
 		if v.Val == true {
 			proc.Done()
 			return false
@@ -34,20 +39,16 @@ func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 	}
 
 	if cw.firstRecord {
-		cw.header = make([]string, content.Len())
-		i := 0
-		for e := content.First(); e != nil; e = e.Next() {
-			k, _ := e.Value.(string)
-			cw.header[i] = k
-			i++
+		if len(cw.header) == 0 {
+			cw.header = contents.Keys()
 		}
 		cw.writer.Write(cw.header)
 		cw.firstRecord = false
 	}
 
-	record := make([]string, content.Len())
+	record := make([]string, contents.Len())
 	for i := 0; i < len(cw.header); i++ {
-		v, _ := content.Get(cw.header[i])
+		v, _ := contents.Get(cw.header[i])
 		if v.Val == nil {
 			record[i] = "nil"
 		} else {

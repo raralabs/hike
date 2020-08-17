@@ -2,12 +2,13 @@ package sources
 
 import (
 	"encoding/csv"
+	"github.com/raralabs/canal/core/message/content"
+	"github.com/raralabs/canal/utils/extract"
 	"io"
 	"log"
 
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
-	"github.com/raralabs/hike/utils"
 )
 
 type CsvReader struct {
@@ -55,12 +56,12 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		log.Panic("Record and Header Length Mismatch")
 	}
 
-	content := message.NewOrderedContent()
+	cntnt := content.New()
 	for i, v := range cr.header {
-		value, valType := utils.GetValType(record[i])
-		content.Add(v, message.NewFieldValue(value, valType))
+		value, valType := extract.ValType(record[i])
+		cntnt.Add(v, content.NewFieldValue(value, valType))
 	}
-	proc.Result(m, content, nil)
+	proc.Result(m, cntnt, nil)
 	cr.currRow++
 
 	return false
@@ -68,9 +69,9 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 
 func (cr *CsvReader) done(m message.Msg, proc pipeline.IProcessorForExecutor) {
 	// Send eof if done
-	content := message.NewOrderedContent()
-	content.Add("eof", message.NewFieldValue(true, message.BOOL))
-	proc.Result(m, content, nil)
+	cntnt := content.New()
+	cntnt.Add("eof", content.NewFieldValue(true, content.BOOL))
+	proc.Result(m, cntnt, nil)
 	proc.Done()
 }
 
