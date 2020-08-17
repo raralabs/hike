@@ -30,7 +30,7 @@ func NewFaker(maxRows int64, m map[string][]interface{}) *Fake {
 
 func (cr *Fake) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
 
-	if cr.currRow == cr.maxRows {
+	if cr.currRow >= cr.maxRows {
 		cr.done(m, proc)
 		return false
 	}
