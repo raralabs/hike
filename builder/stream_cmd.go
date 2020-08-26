@@ -2,6 +2,7 @@ package builder
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"unicode"
 )
@@ -18,6 +19,8 @@ func NewStreamCommand() *StreamCommand {
 
 func (s *StreamCommand) Build(cmd string) (string, error) {
 	var ends []string
+
+	fmt.Println(cmd)
 
 	cmd = strings.TrimSpace(cmd)
 	if len(cmd) == 0 {

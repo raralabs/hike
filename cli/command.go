@@ -17,6 +17,8 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 	promptText := "Cmd>> "
 	var lastCommand string
+
+	var multiCommands []string
 	for {
 		cmd := cmdFunc(promptText)
 		str := strings.TrimSpace(cmd)
@@ -25,10 +27,19 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 			break
 		}
 
-		if len(str) == 1 && str[0] == ';' {
+		if str == ";" {
 			promptText = "Cmd>> "
 			commandBuilder.Reset()
 			addHistory(lastCommand + ";")
+			continue
+		} else if str == ";;" {
+			printCommands(multiCommands...)
+			multiCommands = nil
+
+			promptText = "Cmd>> "
+			commandBuilder.Reset()
+			addHistory(lastCommand + ";")
+
 			continue
 		}
 
@@ -44,16 +55,20 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 			continue
 		}
 
+		addHistory(cmd)
 		if done {
+			multiCommands = append(multiCommands, cmd)
 			cmd = command + ";"
+
 			promptText = "Cmd>> "
 		} else {
+			multiCommands = append(multiCommands, cmd)
 			cmd = command
+
 			promptText = ">>>>> "
 		}
 
 		lastCommand = command
-		addHistory(cmd)
 
 		// Build the command
 		starter, ppln, closer := prsr.Build(pipelineId, command)
@@ -73,5 +88,12 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 		// Close everything
 		closer()
+	}
+}
+
+func printCommands(cmds ...string) {
+	fmt.Println("Commands")
+	for _, c := range cmds {
+		fmt.Println(c)
 	}
 }
