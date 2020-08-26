@@ -14,6 +14,7 @@
 # Ignore files used by vscode and goland
 .vscode
 .idea
+.DS_Store
 
 # Ignore temporary files
 tmp/
