@@ -194,6 +194,8 @@ github.com/raralabs/canal v0.0.0-20200817052831-c34a60d974ce h1:FN4KfyCQxc1B76KK
 github.com/raralabs/canal v0.0.0-20200817052831-c34a60d974ce/go.mod h1:lQ072HK7zMiRv+zS2EJBFXH5jG5sdnuQPi7RQMre06g=
 github.com/raralabs/canal v0.0.0-20200817072502-165ca967727e h1:YAMkqINj8Vet/8v+05wwBfgG0KIc6ux6M4mKeKDRaIQ=
 github.com/raralabs/canal v0.0.0-20200817072502-165ca967727e/go.mod h1:lQ072HK7zMiRv+zS2EJBFXH5jG5sdnuQPi7RQMre06g=
+github.com/raralabs/canal v0.0.0-20200817151357-d628f20496a5 h1:04rUM27idDvs6BJuopEeRxGDrp5cSOcWX9oYt3QyM4g=
+github.com/raralabs/canal v0.0.0-20200817151357-d628f20496a5/go.mod h1:lQ072HK7zMiRv+zS2EJBFXH5jG5sdnuQPi7RQMre06g=
 github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d h1:y+yzi7yHJf8QFJ8yxhpkcVaHRNowWFMa2zKWqdpD3xI=
 github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d/go.mod h1:GsRmJsUa1ZPJO4B4Gt+DJRItiA3PXi3zTE1WH7a0BRo=
 github.com/rivo/tview v0.0.0-20200219210816-cd38d7432498/go.mod h1:6lkG1x+13OShEf0EaOCaTQYyB7d5nSbb181KtjlS+84=
