@@ -1,6 +1,7 @@
 package multi
 
 import (
+	"fmt"
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/message/content"
 	"github.com/raralabs/canal/core/pipeline"
@@ -21,55 +22,22 @@ import (
 	"unicode"
 )
 
-type node struct {
-	id       int64
-	executor pipeline.Executor
-	added    bool
-	toNodes  []at.Node
-}
-
-func (n *node) ID() int64 {
-	return n.id
-}
-
-func (n *node) Executor() pipeline.Executor {
-	return n.executor
-}
-
-func (n *node) Add() {
-	n.added = true
-}
-
-func (n *node) IsAdded() bool {
-	return n.added
-}
-
-func (n *node) ToNodes() []at.Node {
-	return n.toNodes
-}
-
-type tree struct {
-	sources []at.Node
-}
-
-func (t *tree) Sources() []at.Node {
-	return t.sources
-}
-
-var (
+type atBuilder struct {
 	streamFromMu, streamToMu *sync.Mutex
 	streamFrom               map[string][]at.Node
 	streamTo                 map[string]*node
-)
-
-func init() {
-	streamFromMu = &sync.Mutex{}
-	streamToMu = &sync.Mutex{}
-	streamFrom = make(map[string][]at.Node)
-	streamTo = make(map[string]*node)
 }
 
-func Build(cmds ...string) at.AT {
+func newATBuilder() *atBuilder {
+	return &atBuilder{
+		streamFromMu: &sync.Mutex{},
+		streamToMu:   &sync.Mutex{},
+		streamFrom:   make(map[string][]at.Node),
+		streamTo:     make(map[string]*node),
+	}
+}
+
+func (p *atBuilder) Build(cmds ...string) at.AT {
 
 	// Remove ";" from the end of each command if present.
 	// Remove "into xxx" from the end.
@@ -83,20 +51,20 @@ func Build(cmds ...string) at.AT {
 
 	for _, c := range cmds {
 		var src at.Node
-		src, startId = buildSinglePipe(startId, c)
+		src, startId = p.buildSinglePipe(startId, c)
 		if src != nil {
 			srcs = append(srcs, src)
 		}
 	}
 
-	streamToMu.Lock()
-	streamFromMu.Lock()
-	defer streamToMu.Unlock()
-	defer streamFromMu.Unlock()
+	p.streamToMu.Lock()
+	p.streamFromMu.Lock()
+	defer p.streamToMu.Unlock()
+	defer p.streamFromMu.Unlock()
 
-	for s := range streamTo {
-		if tos, ok := streamFrom[s]; ok {
-			streamTo[s].toNodes = append(streamTo[s].toNodes, tos...)
+	for s := range p.streamTo {
+		if tos, ok := p.streamFrom[s]; ok {
+			p.streamTo[s].toNodes = append(p.streamTo[s].toNodes, tos...)
 		}
 	}
 	absTree := &tree{sources: srcs}
@@ -104,7 +72,7 @@ func Build(cmds ...string) at.AT {
 	return absTree
 }
 
-func buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
+func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
 	cmd = strings.TrimSpace(cmd)
 	if cmd[len(cmd)-1] == ';' {
 		cmd = cmd[:len(cmd)-1]
@@ -149,9 +117,9 @@ func buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
 			log.Panic(stg)
 		}
 		n := &node{
-			id:       startId,
-			executor: exec,
-			added:    true,
+			id:    startId,
+			exec:  exec,
+			added: true,
 		}
 		startId++
 
@@ -162,9 +130,9 @@ func buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
 		// If first node, and streamFromName exists, add to streamFrom
 		if i == 0 {
 			if streamFromName != "" {
-				streamFromMu.Lock()
-				streamFrom[streamFromName] = append(streamFrom[streamFromName], n)
-				streamFromMu.Unlock()
+				p.streamFromMu.Lock()
+				p.streamFrom[streamFromName] = append(p.streamFrom[streamFromName], n)
+				p.streamFromMu.Unlock()
 			} else {
 				// No streamFromName implies this node must be a source
 				firstNode = n
@@ -173,13 +141,18 @@ func buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
 
 		// If last node, and streamTo exists, add to streamTo
 		if i == len(stgs)-1 && streamToName != "" {
-			streamToMu.Lock()
-			if _, ok := streamTo[streamToName]; ok {
-				streamToMu.Unlock()
+			p.streamToMu.Lock()
+			var keys []string
+			for k := range p.streamTo {
+				keys = append(keys, k)
+			}
+			fmt.Println(keys)
+			if _, ok := p.streamTo[streamToName]; ok {
+				p.streamToMu.Unlock()
 				log.Panic("Can't have two different pipeline streaming to single stream")
 			}
-			streamTo[streamToName] = n
-			streamToMu.Unlock()
+			p.streamTo[streamToName] = n
+			p.streamToMu.Unlock()
 		}
 
 		lastNode = n

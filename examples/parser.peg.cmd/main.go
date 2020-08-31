@@ -4,11 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/raralabs/hike/parser/single"
 	"log"
 	"os"
 	"time"
 
-	"github.com/raralabs/hike/parser/peg"
 	"github.com/raralabs/hike/utils/faker"
 )
 
@@ -41,7 +41,7 @@ func main() {
 		panic("Command not passed")
 	}
 
-	builder := peg.NewPegCmd()
+	builder := single.NewParser()
 
 	// Initialize the builder
 	builder.Init()

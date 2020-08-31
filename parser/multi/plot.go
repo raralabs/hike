@@ -1,4 +1,4 @@
-package stream
+package multi
 
 import (
 	"fmt"

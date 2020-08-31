@@ -1,7 +1,8 @@
-package peg
+package single
 
 import (
 	"fmt"
+	"github.com/raralabs/hike/parser/peg"
 	"log"
 	"os"
 
@@ -34,15 +35,25 @@ func strIn(strs []string, str string) bool {
 	return false
 }
 
-type singleBranchParser struct {
+type parser struct {
 }
 
-func (c *singleBranchParser) Init() {
+func NewParser() *parser {
+	return &parser{}
+}
+
+func (c *parser) Init() {
 	// Build the grammar, generate codes and stuffs in here
 }
 
-func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
-	stages, err := Parse("", []byte(cmd))
+func (c *parser) Build(id uint32, cmds ...string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func()) {
+	// Single Branch Parser must have a single command
+	if len(cmds) != 1 {
+		return nil, nil, nil
+	}
+	cmd := cmds[0]
+
+	stages, err := peg.Parse("", []byte(cmd))
 
 	if err != nil {
 		log.Panic(err)
@@ -65,7 +76,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 		stageName := fmt.Sprintf("Stage%v", i)
 
 		switch s := stg.(type) {
-		case FileJob:
+		case peg.FileJob:
 			// FileJob can act as both a source or sink depending upon it's placement
 			fileName := s.Filename
 
@@ -96,7 +107,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 				useDefaultSink = false
 			}
 
-		case FakeJob:
+		case peg.FakeJob:
 			// FileJob can act as both a source or sink depending upon it's placement
 			numData := s.NumData
 
@@ -110,7 +121,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 				log.Println("[ERROR] Generating fake data")
 			}
 
-		case DoNodeJob:
+		case peg.DoNodeJob:
 			stg := p.AddTransform(stageName)
 			var proc pipeline.IProcessor
 
@@ -128,28 +139,28 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			}
 
 			switch doJob := s.Function.(type) {
-			case Filter:
+			case peg.Filter:
 				proc = stg.AddProcessor(opts, doFn.FilterFunction(doJob, doneFunc), routeParam)
 
-			case Select:
+			case peg.Select:
 				fields := doJob.Fields
 				proc = stg.AddProcessor(opts, doFn.SelectFunction(fields, doneFunc), routeParam)
 
-			case Pick:
+			case peg.Pick:
 				dsc := doJob.Desc
 				if !strIn(availablePicks, dsc) {
 					log.Panicf("Can't pick by: %s", dsc)
 				}
 				proc = stg.AddProcessor(opts, doFn.PickFunction(dsc, doJob.Num, doneFunc), routeParam)
 
-			case Sort:
+			case peg.Sort:
 				fld := doJob.Field
 				proc = stg.AddProcessor(opts, doFn.SortFunction(fld, doneFunc), routeParam)
 
-			case Batch:
+			case peg.Batch:
 				proc = stg.AddProcessor(opts, doFn.BatchAgg(doneFunc), routeParam)
 
-			case Enrich:
+			case peg.Enrich:
 				if expr := doJob.Expr; expr != nil {
 					proc = stg.AddProcessor(opts, doFn.EnrichFunction(doJob.Field, expr, doneFunc), routeParam)
 				}
@@ -158,7 +169,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			stg.ReceiveFrom(routeParam, lastProc)
 			lastProc = proc
 
-		case AggNodeJob:
+		case peg.AggNodeJob:
 			aggFuncs := s.Functions
 			var aggs []agg.IAggFuncTemplate
 
@@ -181,7 +192,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 
 			for _, ags := range aggFuncs {
 				switch ag := ags.(type) {
-				case Count:
+				case peg.Count:
 					cnt := aggregates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -197,7 +208,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, cnt)
 
-				case Max:
+				case peg.Max:
 					mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -213,7 +224,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, mx)
 
-				case Min:
+				case peg.Min:
 					mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -229,7 +240,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, mn)
 
-				case Avg:
+				case peg.Avg:
 					avg := aggregates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -245,7 +256,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, avg)
 
-				case Sum:
+				case peg.Sum:
 					sum := aggregates.NewSum(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -261,7 +272,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, sum)
 
-				case Variance:
+				case peg.Variance:
 					variance := aggregates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -277,7 +288,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, variance)
 
-				case DistinctCount:
+				case peg.DistinctCount:
 					variance := aggregates.NewDCount(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -293,7 +304,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, variance)
 
-				case Mode:
+				case peg.Mode:
 					variance := aggregates.NewMode(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
 						if v, ok := m["eof"]; ok {
 							if v == true {
@@ -309,7 +320,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 					})
 					aggs = append(aggs, variance)
 
-				case Quantile:
+				case peg.Quantile:
 					quantile := aggregates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
@@ -326,7 +337,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 						})
 					aggs = append(aggs, quantile)
 
-				case Covariance:
+				case peg.Covariance:
 					cov := aggregates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
@@ -343,7 +354,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 						})
 					aggs = append(aggs, cov)
 
-				case Correlation:
+				case peg.Correlation:
 					corr := aggregates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
@@ -360,7 +371,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 						})
 					aggs = append(aggs, corr)
 
-				case PValue:
+				case peg.PValue:
 					pval := aggregates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
 						func(m map[string]interface{}) bool {
 							if v, ok := m["eof"]; ok {
@@ -389,7 +400,7 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 			stg.ReceiveFrom(routeParam, lastProc)
 			lastProc = proc
 
-		case SinkJob:
+		case peg.SinkJob:
 			if i != len(stgs)-1 {
 				log.Panic("Sink Job not at the End")
 			}
@@ -407,10 +418,10 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 
 			default:
 				switch snkJob := s.Args.(type) {
-				case Plot:
+				case peg.Plot:
 					snk := p.AddSink("Plot Sink")
 					switch w := snkJob.Widget.(type) {
-					case BarPlot:
+					case peg.BarPlot:
 						snk.AddProcessor(opts, sinks.NewBarPlot(w.Title, w.XField, w.YField, w.BarWidth, w.BarGap), routeParam)
 					}
 					snk.ReceiveFrom(routeParam, lastProc)
@@ -444,10 +455,6 @@ func (c *singleBranchParser) Build(id uint32, cmd string) (startFunc func(), ppl
 	}
 
 	return starter, p, closer
-}
-
-func NewPegCmd() *singleBranchParser {
-	return &singleBranchParser{}
 }
 
 func defaultSink(p *pipeline.Pipeline, routeParam pipeline.MsgRouteParam, lastProc pipeline.IProcessor, header ...string) {

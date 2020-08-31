@@ -10,7 +10,7 @@ import (
 	"github.com/raralabs/hike/parser"
 )
 
-func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
+func SingleCommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
 	commandBuilder := builder.NewCommand()
 	streamBuilder := builder.NewStreamCommand()
 	pipelineId := uint32(1)
@@ -18,7 +18,6 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 	promptText := "Cmd>> "
 	var lastCommand string
 
-	var multiCommands []string
 	for {
 		cmd := cmdFunc(promptText)
 		str := strings.TrimSpace(cmd)
@@ -32,24 +31,15 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 			commandBuilder.Reset()
 			addHistory(lastCommand + ";")
 			continue
-		} else if str == ";;" {
-			printCommands(multiCommands...)
-			multiCommands = nil
-
-			promptText = "Cmd>> "
-			commandBuilder.Reset()
-			addHistory(lastCommand + ";")
-
-			continue
 		}
 
-		stream, err := streamBuilder.Build(cmd)
+		strm, err := streamBuilder.Build(cmd)
 		if err != nil {
 			fmt.Println("Error: ", err)
 			continue
 		}
 
-		command, done, err := commandBuilder.Add(stream)
+		command, done, err := commandBuilder.Add(strm)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -57,12 +47,10 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 		addHistory(cmd)
 		if done {
-			multiCommands = append(multiCommands, cmd)
 			cmd = command + ";"
 
 			promptText = "Cmd>> "
 		} else {
-			multiCommands = append(multiCommands, cmd)
 			cmd = command
 
 			promptText = ">>>>> "
@@ -88,12 +76,5 @@ func CommandMode(cmdFunc func(string) string, addHistory func(string), prsr pars
 
 		// Close everything
 		closer()
-	}
-}
-
-func printCommands(cmds ...string) {
-	fmt.Println("Commands")
-	for _, c := range cmds {
-		fmt.Println(c)
 	}
 }

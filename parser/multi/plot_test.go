@@ -1,4 +1,4 @@
-package stream
+package multi
 
 import (
 	"github.com/raralabs/canal/core/message"
