@@ -9,5 +9,5 @@ func main() {
 	p := &wm.Project{
 		History: ".tmp.cmd_history",
 	}
-	cliner.Liner(p, "single")
+	cliner.Liner(p, "multi")
 }

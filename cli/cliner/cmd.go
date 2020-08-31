@@ -2,6 +2,9 @@ package cliner
 
 import (
 	"fmt"
+	"github.com/raralabs/hike/parser"
+	"github.com/raralabs/hike/parser/multi"
+	"github.com/raralabs/hike/parser/single"
 	"log"
 	"os"
 	"strings"
@@ -9,7 +12,6 @@ import (
 	"github.com/peterh/liner"
 	"github.com/raralabs/go-wm/wm"
 	"github.com/raralabs/hike/cli"
-	"github.com/raralabs/hike/parser/peg"
 )
 
 var (
@@ -45,6 +47,16 @@ var (
 
 		"end",
 	}
+
+	parsers = map[string]parser.IParser {
+		"single": single.NewParser(),
+		"multi": multi.NewParser(),
+	}
+
+	handlers = map[string]func(func(string) string, func(string), parser.IParser) {
+		"single": cli.SingleCommandMode,
+		"multi": cli.MultiCommandMode,
+	}
 )
 
 func noneSuggest(line string) (c []string) {
@@ -73,7 +85,7 @@ func commandSuggest(line string) (c []string) {
 	return
 }
 
-func Liner(p *wm.Project) {
+func Liner(p *wm.Project, mode string) {
 	line := liner.NewLiner()
 	defer line.Close()
 
@@ -99,7 +111,15 @@ func Liner(p *wm.Project) {
 		f.Close()
 	}
 
-	prsr := peg.NewPegCmd()
+	// Resolve the parser and the handler
+	if _, ok := parsers[mode]; !ok {
+		log.Println("[ERROR] Undefined Parser Mode:", mode)
+	}
+	if _, ok := handlers[mode]; !ok {
+		log.Println("[ERROR] Undefined Handler Mode:", mode)
+	}
+	prsr := parsers[mode]
+	handler := handlers[mode]
 
 	// Initialize the parser
 	prsr.Init()
@@ -154,7 +174,7 @@ func Liner(p *wm.Project) {
 				defaultSuggestionsSet = false
 				line.SetCompleter(commandSuggest)
 
-				cli.CommandMode(func(prompt string) string {
+				handler(func(prompt string) string {
 					t, err := line.Prompt(prompt)
 					if err != nil {
 						log.Panic(err)

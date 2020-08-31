@@ -7,5 +7,5 @@ type IParser interface {
 	Init()
 
 	// Build builds a pipeline on the basis of the provided command
-	Build(id uint32, cmd string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func())
+	Build(id uint32, cmds ...string) (startFunc func(), ppln *pipeline.Pipeline, closeFunc func())
 }

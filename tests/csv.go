@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/csv"
 	"fmt"
+	"github.com/raralabs/hike/parser/single"
 	"io"
 	"log"
 	"os"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/raralabs/hike/cli"
 	"github.com/raralabs/hike/parser"
-	"github.com/raralabs/hike/parser/peg"
 )
 
 type CsvTest struct {
@@ -19,7 +19,7 @@ type CsvTest struct {
 
 func NewCsvTest() *CsvTest {
 
-	prsr := peg.NewPegCmd()
+	prsr := single.NewParser()
 	// Initialize the parser
 	prsr.Init()
 
@@ -33,7 +33,7 @@ func (ct *CsvTest) run(cmd string) {
 	cmds := []string{cmd + ";", "end"}
 	i := 0
 
-	cli.CommandMode(func(prompt string) string {
+	cli.SingleCommandMode(func(prompt string) string {
 		defer func() {
 			i++
 		}()

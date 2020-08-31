@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/raralabs/hike/parser/single"
 
 	"github.com/raralabs/hike/cli"
 
 	"github.com/c-bata/go-prompt"
-	"github.com/raralabs/hike/parser/peg"
 )
 
 const MaxHistoryLength = 20
@@ -25,7 +25,7 @@ func main() {
 		panic("Can't have history less than 2")
 	}
 	commandHistory := make([]string, MaxHistoryLength)
-	prsr := peg.NewPegCmd()
+	prsr := single.NewParser()
 
 	// Initialize the parser
 	prsr.Init()
@@ -38,7 +38,7 @@ func main() {
 			switch t {
 			case "cmd":
 				// Command Mode
-				cli.CommandMode(func(prmpt string) string {
+				cli.SingleCommandMode(func(prmpt string) string {
 					return prompt.Input(prmpt, cmdCompleter, prompt.OptionHistory(commandHistory))
 				}, func(cmd string) {
 					// Add command to history if it is a not the last command
