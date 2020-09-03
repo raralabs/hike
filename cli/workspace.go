@@ -7,16 +7,20 @@ import (
 	"github.com/raralabs/go-wm/wm"
 )
 
-func WSMode(f func(string) string, project func(*wm.Project)) {
+func WSMode(f func(string) string, project func(*wm.Project, string), mode string) {
 	ws := wm.OpenWorkSpace("hike")
 
-	mode := strings.TrimSpace(f("> "))
-	switch mode {
+	fn := func(p *wm.Project) {
+		project(p, mode)
+	}
+
+	option := strings.TrimSpace(f("> "))
+	switch option {
 	case "create":
 		projName := f("Project Name> ")
 		projDir := f("Project Directory> ")
 		pr, _ := ws.AddNewProject(projName, projDir)
-		pr.Run(project)
+		pr.Run(fn)
 		pr.Save()
 
 	case "open":
@@ -25,7 +29,7 @@ func WSMode(f func(string) string, project func(*wm.Project)) {
 		if err != nil {
 			log.Panic(err)
 		}
-		pr.Run(project)
+		pr.Run(fn)
 		pr.Save()
 
 	case "remove":

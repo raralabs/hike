@@ -14,7 +14,6 @@ require (
 	github.com/mattn/go-tty v0.0.3 // indirect
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03 // indirect
-	github.com/raralabs/canal v0.0.0-20200903062230-4b82652834aa
+	github.com/raralabs/canal v0.0.0-20200903074848-d92f60f4fe74
 	github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d
-	github.com/stretchr/testify v1.5.1
 )
