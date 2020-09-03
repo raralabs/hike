@@ -43,8 +43,6 @@ func (ct *CsvTest) run(cmd string) {
 
 func (ct *CsvTest) Test(expFile, actFile, cmd string) (string, bool) {
 
-	cmd = fmt.Sprintf("%s | batch() | file(%s)", cmd, actFile)
-
 	exp, err := os.Open(expFile)
 	if err != nil {
 		log.Panic(err)
