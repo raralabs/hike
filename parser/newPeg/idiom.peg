@@ -1,102 +1,18 @@
 {
-package peg
+package newPeg
 }
 
-Main <- agg:Job rest:(_ "|" _ Job)* {
-    jobs := []interface{}{agg}
-    rst := cast.ToIfaceSlice(rest)
-    for _, v := range rst {
-        rstJob := cast.ToIfaceSlice(v)
-        if len(rstJob) == 4 {
-            jobs = append(jobs, rstJob[3])
-        }
-    }
-    return jobs, nil
-}
+Command <- command:Statement rest:((_ Statement)* _ TOK_SEMICOLON)
 
-// Math Grammar
-MExpr <- first:MValue rest:(_ MOps _ MValue)* {
-        return parseMathExpr(first, rest), nil
-}
+Statement <- statement:Source rest:((_ "|" _ Transform)* _"|"_ Sink _ TOK_SEMICOLON)
 
-MValue <- val:(Float / Number / String_Type1 / Variable / MFactor) {
-        return val, nil
-}
+Source <- FileJobG/FakeJobG
 
-MOps <- "%" / "-" / "+" / "*" / "/" {
-        return string(c.text), nil
-}
+Transform <- DoJobG/AggJobG
 
-MFactor <- '(' ex:MExpr ')' {
+Sink <- StdOutG / BlackHoleG / PlotG
 
-    e, _ := cast.TryString(ex)
-    return "(" + e + ")", nil
-} / ex:MExpr {
-    return ex, nil
-}
-
-
-// Basic Grammar
-
-Expr <- first:Value rest:(_ MOps _ Value)* {
-        return parseMathExpr(first, rest), nil
-}
-
-Value <- val:(Float / Number / String_Type1 / Variable) {
-        return val, nil
-}
-
-Variable <- Letter (Integer / Letter/ "_")* {
-        return string(c.text), nil
-}
-
-String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
-        c.text = bytes.Replace(c.text, []byte(`\/`), []byte(`/`), -1)
-        str,_ := strconv.Unquote(string(c.text))
-
-        return cast.GetStringValue(str), nil
-}
-
-EscapedChar <- [\x00-\x1f"\\]
-
-EscapeSequence <- SingleCharEscape
-
-SingleCharEscape <- ["\\/bfnrt]
-
-Word <- (Letter / "_")+ {
-        return string(c.text), nil
-}
-
-Letter <- [a-z] / [A-Z]
-
-Number <- '-'? Integer {
-        return strconv.ParseInt(string(c.text), 10, 64)
-}
-
-PositiveNumber <- Integer {
-        return strconv.ParseInt(string(c.text), 10, 64)
-}
-
-Float <- '-'? Integer? "." Integer {
-    return strconv.ParseFloat(string(c.text), 64)
-}
-
-Integer <- '0' / NonZeroDecimalDigit DecimalDigit*
-
-DecimalDigit <- [0-9]
-
-NonZeroDecimalDigit <- [1-9]
-
-_ "whitespace" <- [ \t\r\n]*
-
-OneWhiteSpace <- [ \t\r\n]
-
-EOF <- !.
-
-// Jobs
-
-Job <- FileJobG / FakeJobG / DoJobG / MapJobG / AggJobG / SinkJobG
-
+//Source Jobs
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
         return FileJob{Filename: fname}, nil
@@ -111,20 +27,9 @@ FakeJobG <- _ "fake(" _ numData:PositiveNumber _ ")" {
     return nil, errors.New("could not decode source file name")
 }
 
-FileName <- Variable ("." ext:Variable)* {
-    nm, _ := cast.TryString(string(c.text))
-
-    return nm, nil
-}
-
-DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
-        return DoNodeJob{Function: job}, nil
-}
-
-MapJobG <- "map" _ job:(EnrichDo) {
-        return DoNodeJob{Function: job}, nil
-}
-
+//End Source Jobs
+//Transform jobs
+//All related to the aggregator transform
 AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         jobSlices := cast.ToIfaceSlice(rest)
         jobs := []interface{}{job}
@@ -142,189 +47,6 @@ AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
 AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
            / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
            / CovAgg / CorrAgg / PValueAgg
-
-AggGroupBy <- _ "by" _ param:Variable rest:("," _ Variable)* {
-    p1, _ := cast.TryString(param)
-    params := []string{p1}
-
-    restSlice := cast.ToIfaceSlice(rest)
-    for _, v := range restSlice {
-            ps := cast.ToIfaceSlice(v)
-            p2, _ := cast.TryString(ps[2])
-            params = append(params, p2)
-    }
-
-    return params, nil
-}
-
-
-
-StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
-
-    if header, ok := params.([]string); ok {
-        return SinkJob{
-            Type: "stdout",
-            Header: header,
-        }, nil
-    }
-    return SinkJob{
-        Type: "stdout",
-        Header: nil,
-    }, nil
-}
-
-BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
-        return SinkJob{Type: "blackhole"}, nil
-}
-
-PlotG <- "plot" _ widget:(BarWidget) {
-    return SinkJob{Type: "plot", Args: widget}, nil
-}
-
-BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {
-
-    title := "Bar Chart"
-	if alias != nil {
-		if nm, ok := cast.TryString(alias); ok {
-			title = nm
-		}
-	}
-
-	xfld, _ := cast.TryString(xField)
-	yfld, _ := cast.TryString(yField)
-
-	width := int64(3)
-	gap := int64(2)
-	if args != nil {
-	    argSlice := cast.ToIfaceSlice(args)
-	    width, _ = cast.TryInt(argSlice[2])
-
-	    gapArg := argSlice[4]
-	    if gapArg != nil {
-	        gapSlice := cast.ToIfaceSlice(gapArg)
-	        gap, _ = cast.TryInt(gapSlice[2])
-	    }
-	}
-
-	title += "(q to quit)"
-
-	return Plot{Type: "bar", Widget: BarPlot{Title: title, XField: xfld, YField: yfld, BarWidth: int(width), BarGap: int(gap)}}, nil
-}
-
-
-// Filter Grammar
-
-FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
-        if f, ok := filt.(Filter); ok {
-                return f, nil
-        }
-        return nil, errors.New("Could not parse filter")
-}
-
-// A FilterMulti defines a filter that consists of either a single factor or
-// multiple factors separated by secondary operators.
-FilterMulti <- first:FilterFactor rest:(_ op:FilterSecOp _ f2:FilterFactor)* {
-        return newSecondaryFilter(first, rest), nil
-}
-
-// A Factor is either a primary filter or a multi filter enclosed by parenthesis
-FilterFactor <- '(' sf:FilterMulti ')' {
-    return sf, nil
-} / pf:FilterPrimary {
-    return pf, nil
-}
-
-FilterSecOp <- "and" / "or" {
-        return string(c.text), nil
-}
-
-
-// A FilterPrimary defines a filter that checks if the value defined by the
-// variable is according to the primary operator.
-FilterPrimary <- name:Expr _ op:FilterPriOp _ value:Value _ {
-        return newPrimaryFilter(name.(string), op, value), nil
-}
-
-FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
-        return string(c.text), nil
-}
-
-
-// Branch Grammar
-
-BranchDo <- "branch(" _ br:BranchPrimary _ ")" {
-        if branch, ok := cast.TryString(br); ok {
-                return Branch{Condition: branch}, nil
-        }
-        return nil, errors.New("Could not decode branch syntax")
-}
-
-BranchPrimary <- name:Expr _ op:BranchPriOp _ value:(Value) {
-        return string(c.text), nil
-}
-
-BranchPriOp <- FilterPriOp
-
-
-// Select Grammar
-
-SelectDo <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
-    fld, _ := cast.TryString(field)
-    fields := []string{ fld }
-
-    rst := cast.ToIfaceSlice(rest)
-    for _, r := range rst {
-        rstVal := cast.ToIfaceSlice(r)
-        fld, _ := cast.TryString(rstVal[2])
-        fields = append(fields, fld)
-    }
-
-    return Select{Fields: fields}, nil
-}
-
-// Pick Grammar
-PickDo <- "pick" _ desc:Variable "(" _ num:Number _ ")" {
-    n, _ := cast.TryInt(num)
-    if n < 0 {
-        log.Panic("Can't take less than 0 items")
-    }
-
-    dsc, _ := cast.TryString(desc)
-
-    return Pick{Desc: dsc, Num: uint64(n)}, nil
-}
-
-// Sort Grammar
-SortDo <- "sort()" _ "by" _ alias:Variable {
-    fld, _ := cast.TryString(alias)
-    return Sort{Field: fld}, nil
-}
-
-// Batch Grammar
-BatchDo <- "batch(" _ num:Number? _ ")" {
-
-    n := int64(-1)
-    if num != nil {
-        n, _ = cast.TryInt(num)
-    }
-    return Batch{Num: n}, nil
-}
-
-// Enrich Grammar
-EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
-    field, _ := cast.TryString(fld)
-    ex, _ := cast.TryString(expr)
-
-    expression, err := govaluate.NewEvaluableExpression(ex)
-    if err != nil {
-        panic(err)
-    }
-
-    return Enrich{Field: field, Expr: expression}, nil
-}
-
-
-// Aggregator Functions Grammar
 
 CountAgg <- alias:EqAliasG? _ "count(" _ args:FilterMulti? _ ")"  {
 
@@ -666,22 +388,239 @@ PValueAgg <- alias:EqAliasG? _ "pvalue(" _ field1:Variable _ "," _ field2:Variab
     fld2, _ := cast.TryString(field2)
     return PValue{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
 }
+//end of aggregator transform
 
-// Alias Grammar
-
-AliasG <- _ "as" _ alias:Variable {
-    if name, ok := cast.TryString(alias); ok {
-        return name, nil
-    }
-    return nil, errors.New("Could not decode alias")
+DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
+        return DoNodeJob{Function: job}, nil
 }
 
-EqAliasG <- alias:Variable _ "=" {
-    if name, ok := cast.TryString(alias); ok {
-        return name, nil
-    }
-    return nil, errors.New("Could not decode alias")
+// Branch Grammar
+
+BranchDo <- "branch(" _ br:BranchPrimary _ ")" {
+        if branch, ok := cast.TryString(br); ok {
+                return Branch{Condition: branch}, nil
+        }
+        return nil, errors.New("Could not decode branch syntax")
 }
+
+BranchPrimary <- name:Expr _ op:BranchPriOp _ value:(Value) {
+        return string(c.text), nil
+}
+
+BranchPriOp <- FilterPriOp
+// Select Grammar
+
+SelectDo <- "select(" _ field:Variable _ rest:("," _ Variable)* _ ")"  {
+    fld, _ := cast.TryString(field)
+    fields := []string{ fld }
+
+    rst := cast.ToIfaceSlice(rest)
+    for _, r := range rst {
+        rstVal := cast.ToIfaceSlice(r)
+        fld, _ := cast.TryString(rstVal[2])
+        fields = append(fields, fld)
+    }
+
+    return Select{Fields: fields}, nil
+}
+
+// Pick Grammar
+PickDo <- "pick" _ desc:Variable "(" _ num:Number _ ")" {
+    n, _ := cast.TryInt(num)
+    if n < 0 {
+        log.Panic("Can't take less than 0 items")
+    }
+
+    dsc, _ := cast.TryString(desc)
+
+    return Pick{Desc: dsc, Num: uint64(n)}, nil
+}
+
+// Sort Grammar
+SortDo <- "sort()" _ "by" _ alias:Variable {
+    fld, _ := cast.TryString(alias)
+    return Sort{Field: fld}, nil
+}
+
+// Batch Grammar
+BatchDo <- "batch(" _ num:Number? _ ")" {
+
+    n := int64(-1)
+    if num != nil {
+        n, _ = cast.TryInt(num)
+    }
+    return Batch{Num: n}, nil
+}
+
+// Filter Grammar
+
+FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
+        if f, ok := filt.(Filter); ok {
+                return f, nil
+        }
+        return nil, errors.New("Could not parse filter")
+}
+
+// A FilterMulti defines a filter that consists of either a single factor or
+// multiple factors separated by secondary operators.
+FilterMulti <- first:FilterFactor rest:(_ op:FilterSecOp _ f2:FilterFactor)* {
+        return newSecondaryFilter(first, rest), nil
+}
+
+// A Factor is either a primary filter or a multi filter enclosed by parenthesis
+FilterFactor <- '(' sf:FilterMulti ')' {
+    return sf, nil
+} / pf:FilterPrimary {
+    return pf, nil
+}
+
+FilterSecOp <- "and" / "or" {
+        return string(c.text), nil
+}
+
+
+// A FilterPrimary defines a filter that checks if the value defined by the
+// variable is according to the primary operator.
+FilterPrimary <- name:Expr _ op:FilterPriOp _ value:Value _ {
+        return newPrimaryFilter(name.(string), op, value), nil
+}
+
+FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
+        return string(c.text), nil
+}
+//end Filter grammar
+
+MapJobG <- "map" _ job:(EnrichDo) {
+        return DoNodeJob{Function: job}, nil
+}
+// Enrich Grammar
+EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
+    field, _ := cast.TryString(fld)
+    ex, _ := cast.TryString(expr)
+
+    expression, err := govaluate.NewEvaluableExpression(ex)
+    if err != nil {
+        panic(err)
+    }
+
+    return Enrich{Field: field, Expr: expression}, nil
+}
+//end enrich grammar
+
+//End Transform Jobs
+
+//Sink Jobs
+StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
+
+    if header, ok := params.([]string); ok {
+        return SinkJob{
+            Type: "stdout",
+            Header: header,
+        }, nil
+    }
+    return SinkJob{
+        Type: "stdout",
+        Header: nil,
+    }, nil
+}
+
+BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
+        return SinkJob{Type: "blackhole"}, nil
+}
+
+PlotG <- "plot" _ widget:(BarWidget) {
+    return SinkJob{Type: "plot", Args: widget}, nil
+}
+//End Sink Jobs
+
+
+FileName <- Variable ("." ext:Variable)* {
+    nm, _ := cast.TryString(string(c.text))
+
+    return nm, nil
+}
+// Math Grammar
+MExpr <- first:MValue rest:(_ MOps _ MValue)* {
+        return parseMathExpr(first, rest), nil
+}
+
+MValue <- val:(Float / Number / String_Type1 / Variable / MFactor) {
+        return val, nil
+}
+
+MOps <- "%" / "-" / "+" / "*" / "/" {
+        return string(c.text), nil
+}
+
+MFactor <- '(' ex:MExpr ')' {
+
+    e, _ := cast.TryString(ex)
+    return "(" + e + ")", nil
+} / ex:MExpr {
+    return ex, nil
+}
+//end of Math Grammar
+
+// Basic Grammar
+
+Expr <- first:Value rest:(_ MOps _ Value)* {
+        return parseMathExpr(first, rest), nil
+}
+
+Value <- val:(Float / Number / String_Type1 / Variable) {
+        return val, nil
+}
+
+Variable <- Letter (Integer / Letter/ "_")* {
+        return string(c.text), nil
+}
+
+String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
+        c.text = bytes.Replace(c.text, []byte(`\/`), []byte(`/`), -1)
+        str,_ := strconv.Unquote(string(c.text))
+
+        return cast.GetStringValue(str), nil
+}
+
+EscapedChar <- [\x00-\x1f"\\]
+
+EscapeSequence <- SingleCharEscape
+
+SingleCharEscape <- ["\\/bfnrt]
+
+Word <- (Letter / "_")+ {
+        return string(c.text), nil
+}
+
+Letter <- [a-z] / [A-Z]
+
+Number <- '-'? Integer {
+        return strconv.ParseInt(string(c.text), 10, 64)
+}
+
+PositiveNumber <- Integer {
+        return strconv.ParseInt(string(c.text), 10, 64)
+}
+
+Float <- '-'? Integer? "." Integer {
+    return strconv.ParseFloat(string(c.text), 64)
+}
+
+Integer <- '0' / NonZeroDecimalDigit DecimalDigit*
+
+DecimalDigit <- [0-9]
+
+NonZeroDecimalDigit <- [1-9]
+
+_ "whitespace" <- [ \t\r\n]*
+
+OneWhiteSpace <- [ \t\r\n]
+
+EOF <- !.
+
+TOK_SEMICOLON<- ";"
+
+//End of Basic Grammar
 
 // Parameter List
 // Variable Parameters Extraction

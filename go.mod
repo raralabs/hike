@@ -15,5 +15,4 @@ require (
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03 // indirect
 	github.com/raralabs/canal v0.0.0-20200903081923-7b6541c0d100
-	github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d
-)
+	)

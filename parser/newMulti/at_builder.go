@@ -1,4 +1,4 @@
-package multi
+package newMulti
 
 import (
 	"fmt"
@@ -37,6 +37,15 @@ func newATBuilder() *atBuilder {
 	}
 }
 
+//checks if the statement starts with #
+//if yes then its a comment. So returns true
+//else false
+func (p *atBuilder) IsComment(cmd string) bool{
+	if cmd[0]=='#'{
+		return true
+	}
+	return false
+}
 
 
 func (p *atBuilder) Build(cmds ...string) at.AT {
@@ -52,10 +61,12 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 	var srcs []at.Node
 
 	for _, c := range cmds {
-		var src at.Node
-		src, startId = p.buildSinglePipe(startId, c)
-		if src != nil {
-			srcs = append(srcs, src)
+		if !p.IsComment(c) {
+			var src at.Node
+			src, startId = p.buildSinglePipe(startId, c)
+			if src != nil {
+				srcs = append(srcs, src)
+			}
 		}
 	}
 
@@ -81,12 +92,11 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	}
 
 	// Check if the output goes to some stream
-
 	cmds := strings.Fields(cmd)
 	streamToName := ""
 	streamFromName := ""
 
-	if len(cmds) > 1 {
+	if len(cmds) > 1{
 		if cmds[len(cmds)-2] == "into" {
 			streamToName = cmds[len(cmds)-1]
 			cmds = cmds[:len(cmds)-2]
@@ -102,6 +112,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	}
 	cmd = strings.TrimSpace(cmd)
 	//fmt.Println(cmd)
+	fmt.Println("Command",cmd)
 	// cmd is now ready to be parsed by peg
 	stages, err := peg.Parse("", []byte(cmd))
 	fmt.Println(stages)
@@ -114,7 +125,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	var firstNode *node
 
 	for i, stg := range stgs {
-		fmt.Println("stage",stg)
 		exec := getExecutor(stg)
 		if exec == nil {
 			log.Panic(stg)
@@ -164,6 +174,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 		return nil, startId
 	}
 	return firstNode, startId
+
 }
 
 func isVariable(v string) bool {

@@ -1,4 +1,4 @@
-package multi
+package newMulti
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 
 func TestATBuild(t *testing.T) {
 	cmds := []string{
-		"file(something.csv) | select(age, last_name) into s1",
+		"fake(5) | select(age, last_name) into s1",
 		"s1 | stdout()",
 		"s1 | filter(age > 30) | filter(age>23) | filter(age<10) | stdout()",
 		"s1 | map twice_age = 2 * age | stdout()",
