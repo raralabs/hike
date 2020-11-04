@@ -55,6 +55,9 @@ type BarPlot struct {
 // Do Functions
 type Filter func(map[string]interface{}) (bool, error)
 
+type BranchJob struct{
+	BranchName string
+}
 type Branch struct {
 	Condition string
 }

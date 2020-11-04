@@ -69,6 +69,7 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 			p.streamTo[s].toNodes = append(p.streamTo[s].toNodes, tos...)
 		}
 	}
+	fmt.Println("sources",srcs)
 	absTree := &tree{sources: srcs}
 
 	return absTree
@@ -104,7 +105,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	//fmt.Println(cmd)
 	// cmd is now ready to be parsed by peg
 	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println("here",stages)
+	fmt.Println("here",stages,cmd)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -114,6 +115,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	var firstNode *node
 
 	for i, stg := range stgs {
+		fmt.Println("Stages",stg)
 		exec := getExecutor(stg)
 		if exec == nil {
 			log.Panic(stg)

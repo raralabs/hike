@@ -27,7 +27,7 @@ type atBuilder struct {
 	streamFrom               map[string][]at.Node
 	streamTo                 map[string]*node
 }
-
+//functions that builds the abstract tree
 func newATBuilder() *atBuilder {
 	return &atBuilder{
 		streamFromMu: &sync.Mutex{},
@@ -37,15 +37,6 @@ func newATBuilder() *atBuilder {
 	}
 }
 
-//checks if the statement starts with #
-//if yes then its a comment. So returns true
-//else false
-func (p *atBuilder) IsComment(cmd string) bool{
-	if cmd[0]=='#'{
-		return true
-	}
-	return false
-}
 
 
 func (p *atBuilder) Build(cmds ...string) at.AT {
@@ -61,12 +52,10 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 	var srcs []at.Node
 
 	for _, c := range cmds {
-		if !p.IsComment(c) {
 			var src at.Node
 			src, startId = p.buildSinglePipe(startId, c)
 			if src != nil {
 				srcs = append(srcs, src)
-			}
 		}
 	}
 
