@@ -2,7 +2,6 @@ package newMulti
 
 import (
 	"context"
-	"fmt"
 	"github.com/Knetic/govaluate"
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/ext/sources"
@@ -26,7 +25,6 @@ func TestATBuild(t *testing.T) {
 
 	builder := newATBuilder()
 	absTree := builder.Build(cmds...)
-	fmt.Println("Tree",absTree)
 	Plot(absTree)
 	nb := newNetBuilder()
 

@@ -104,7 +104,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	//fmt.Println(cmd)
 	// cmd is now ready to be parsed by peg
 	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println(stages)
+	fmt.Println("here",stages)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -114,7 +114,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	var firstNode *node
 
 	for i, stg := range stgs {
-		fmt.Println("stage",stg)
 		exec := getExecutor(stg)
 		if exec == nil {
 			log.Panic(stg)
@@ -149,7 +148,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 			for k := range p.streamTo {
 				keys = append(keys, k)
 			}
-			fmt.Println(keys)
 			if _, ok := p.streamTo[streamToName]; ok {
 				p.streamToMu.Unlock()
 				log.Panic("Can't have two different pipeline streaming to single stream")

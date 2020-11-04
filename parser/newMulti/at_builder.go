@@ -111,11 +111,9 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 		cmd = strings.Join(cmds[1:], "|")
 	}
 	cmd = strings.TrimSpace(cmd)
-	//fmt.Println(cmd)
-	fmt.Println("Command",cmd)
 	// cmd is now ready to be parsed by peg
 	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println(stages)
+	fmt.Println("stages",stages)
 	if err != nil {
 		log.Panic(err)
 	}

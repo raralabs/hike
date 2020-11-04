@@ -6,11 +6,9 @@ Main <- agg:Job rest:(_ "|" _ Job)* {
     jobs := []interface{}{agg}
     rst := cast.ToIfaceSlice(rest)
     for _, v := range rst {
-        rstJob := cast.ToIfaceSlice(v)
-        if len(rstJob) == 4 {
-            jobs = append(jobs, rstJob[3])
-        }
+        fmt.Println("Value",v)
     }
+
     return jobs, nil
 }
 
@@ -157,7 +155,7 @@ AggGroupBy <- _ "by" _ param:Variable rest:("," _ Variable)* {
     return params, nil
 }
 
-
+SinkJobG <- StdOutG / BlackHoleG / PlotG
 
 StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
 
@@ -325,8 +323,7 @@ EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
 
 
 // Aggregator Functions Grammar
-
-CountAgg <- alias:EqAliasG? _ "count(" _ args:FilterMulti? _ ")"  {
+CountAgg <- "count(" _ args:FilterMulti? _ ")"  {
 
     name, filter, err := parseAggArgs(alias, args)
     if err != nil {

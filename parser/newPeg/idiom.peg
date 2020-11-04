@@ -2,17 +2,71 @@
 package newPeg
 }
 
-Command <- command:Statement rest:((_ Statement)* _ TOK_SEMICOLON)
+Command <- command:Statement rest:((_ Statement)* _ TOK_SEMICOLON){
+    commands := []interface{}{(command.([]interface{}))}
+    	for _,val := range(cast.ToIfaceSlice(rest)){
+    		_,ok := val.([]interface{})
+    		if ok{
+    			newVal := val.([]interface{})
+    			if len(newVal)>0{
+    				newCmds := newVal[0]
+    				nextCmd := cast.ToIfaceSlice(newCmds)
+    				for _,cmd := range(nextCmd){
+    					if len(cast.ToIfaceSlice(cmd))>0{
+    						commands = append(commands,cast.ToIfaceSlice(cmd))
+    					}
+    				}
+    			}
+    		}
+    	}
+        return commands,nil
+}
 
-Statement <- statement:Source rest:((_ "|" _ Transform)* _"|"_ Sink _ TOK_SEMICOLON)
 
-Source <- FileJobG/FakeJobG
+Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ TOK_SEMICOLON){
+    stages := []interface{}{statement}
+    	rst := cast.ToIfaceSlice(rest)
+    	for _,val := range(rst){
+
+    		_,ok := val.([]interface{})
+    		if ok {
+    			newVal := cast.ToIfaceSlice(val)
+
+    			if len(newVal) > 0 {
+    				firstVal := newVal[0]
+    				_, ok1 := firstVal.([]interface{})
+    				if ok1 {
+    					finalVal := cast.ToIfaceSlice(firstVal)
+    					if len(finalVal) == 4 {
+    						stages = append(stages, finalVal[3])
+    					}
+    				}
+    			}
+
+    		}else{
+    			_,ok:= val.([]uint8)
+    			if !ok{
+    				stages = append(stages,val)
+
+    			}
+
+    		}
+
+    	}
+
+    	return stages,nil
+}
+
+
+
+Source <- FileJobG/BranchJobG
 
 Transform <- DoJobG/AggJobG
 
-Sink <- StdOutG / BlackHoleG / PlotG
+Sink <- StdOutG/SinkInto
 
 //Source Jobs
+
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
         return FileJob{Filename: fname}, nil
@@ -20,16 +74,14 @@ FileJobG <- _ "file(" _ filename:FileName _ ")" {
     return nil, errors.New("could not decode source file name")
 }
 
-FakeJobG <- _ "fake(" _ numData:PositiveNumber _ ")" {
-    if n, ok := cast.TryInt(numData); ok {
-        return FakeJob{NumData: n}, nil
-    }
-    return nil, errors.New("could not decode source file name")
-}
-
+BranchJobG <- "branch"
 //End Source Jobs
+
+
+
 //Transform jobs
 //All related to the aggregator transform
+
 AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         jobSlices := cast.ToIfaceSlice(rest)
         jobs := []interface{}{job}
@@ -44,350 +96,26 @@ AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
-AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
-           / VarAgg / DistinctCountAgg / QuantileAgg / MedianAgg / QuartileAgg
-           / CovAgg / CorrAgg / PValueAgg
+AggJobs <- CountAgg
 
-CountAgg <- alias:EqAliasG? _ "count(" _ args:FilterMulti? _ ")"  {
 
-    name, filter, err := parseAggArgs(alias, args)
-    if err != nil {
-        return nil, err
+AggGroupBy <- _ "by" _ param:Variable rest:("," _ Variable)* {
+    p1, _ := cast.TryString(param)
+    params := []string{p1}
+    restSlice := cast.ToIfaceSlice(rest)
+    for _, v := range restSlice {
+            ps := cast.ToIfaceSlice(v)
+            p2, _ := cast.TryString(ps[2])
+            params = append(params, p2)
     }
 
-    return Count{Alias: name, Filter: filter}, nil
+    return params, nil
 }
 
-MaxAgg <- alias:EqAliasG? _ "max(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Max{Alias: name, Field: fld, Filter: filter}, nil
+CountAgg <- condition:"count_of_"entity:Identifier"_"comparator:Comparator"_"param:Integer/Float _"="_"count()"{
+    return "count",nil
 }
 
-MinAgg <- alias:EqAliasG? _ "min(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Min{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-AvgAgg <- alias:EqAliasG? _ "avg(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Avg{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-SumAgg <- alias:EqAliasG? _ "sum(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Sum{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-VarAgg <- alias:EqAliasG? _ "var(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Variance{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-DistinctCountAgg <- alias:EqAliasG? _ "dcount(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return DistinctCount{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-ModeAgg <- alias:EqAliasG? _ "mode(" _ field:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld, _ := cast.TryString(field)
-    return Mode{Alias: name, Field: fld, Filter: filter}, nil
-}
-
-QuantileAgg <- alias:EqAliasG? _ "quantile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Float _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    wt := ""
-    if weight != nil {
-        w := cast.ToIfaceSlice(weight)
-        wt, _ = cast.TryString(w[2])
-    }
-
-    q, _ := cast.TryFloat(qth)
-
-    fld, _ := cast.TryString(field)
-    return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: q}, nil
-}
-
-MedianAgg <- alias:EqAliasG? _ "median(" _ field:Variable _  weight:("," _ Variable)? _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    wt := ""
-    if weight != nil {
-        w := cast.ToIfaceSlice(weight)
-        wt, _ = cast.TryString(w[2])
-    }
-
-    if name == "" {
-        name = "median"
-    }
-
-    fld, _ := cast.TryString(field)
-    return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: float64(0.5)}, nil
-}
-
-QuartileAgg <- alias:EqAliasG? _ "quartile(" _ field:Variable _  weight:("," _ Variable)? _ "," _ qth:Number _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    wt := ""
-    if weight != nil {
-        w := cast.ToIfaceSlice(weight)
-        wt, _ = cast.TryString(w[2])
-    }
-
-    q, _ := cast.TryInt(qth)
-    if q < 1 || q > 4 {
-        log.Panic("Quartile must be in range (1, 4)")
-    }
-
-    if name == "" {
-        if trail, ok := posMap[int(q)]; ok {
-            name = fmt.Sprintf("%v%s quartile", q, trail)
-        } else {
-            name = fmt.Sprintf("%vth quartile", q)
-        }
-    }
-
-    qn := float64(q) * 0.25
-    if qn > 1 {
-        qn = float64(1)
-    }
-
-    fld, _ := cast.TryString(field)
-    return Quantile{Alias: name, Field: fld, Filter: filter, Weight: wt, Qth: qn}, nil
-}
-
-CovAgg <- alias:EqAliasG? _ "cov(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld1, _ := cast.TryString(field1)
-    fld2, _ := cast.TryString(field2)
-    return Covariance{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
-}
-
-CorrAgg <- alias:EqAliasG? _ "correlation(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld1, _ := cast.TryString(field1)
-    fld2, _ := cast.TryString(field2)
-    return Correlation{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
-}
-
-PValueAgg <- alias:EqAliasG? _ "pvalue(" _ field1:Variable _ "," _ field2:Variable _ args:("," _ FilterMulti)? _ ")" {
-
-    var name string
-    var filter Filter
-    var err error
-
-    if args != nil {
-        if ags := cast.ToIfaceSlice(args); ags != nil {
-            name, filter, err = parseAggArgs(alias, ags[2])
-        }
-    } else {
-        name, filter, err = parseAggArgs(alias, nil)
-    }
-
-    if err != nil {
-        return nil, err
-    }
-
-    fld1, _ := cast.TryString(field1)
-    fld2, _ := cast.TryString(field2)
-    return PValue{Alias: name, Field1: fld1, Field2: fld2, Filter: filter}, nil
-}
 //end of aggregator transform
 
 DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
@@ -395,6 +123,10 @@ DoJobG <- job:(FilterDo / BranchDo / SelectDo / PickDo / SortDo / BatchDo) {
 }
 
 // Branch Grammar
+BranchJobG <- "branch"_"("_var:Variable")" {
+        return Branch{Condition:branch},nil
+}
+
 
 BranchDo <- "branch(" _ br:BranchPrimary _ ")" {
         if branch, ok := cast.TryString(br); ok {
@@ -444,7 +176,6 @@ SortDo <- "sort()" _ "by" _ alias:Variable {
 
 // Batch Grammar
 BatchDo <- "batch(" _ num:Number? _ ")" {
-
     n := int64(-1)
     if num != nil {
         n, _ = cast.TryInt(num)
@@ -462,6 +193,7 @@ FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
 }
 
 // A FilterMulti defines a filter that consists of either a single factor or
+
 // multiple factors separated by secondary operators.
 FilterMulti <- first:FilterFactor rest:(_ op:FilterSecOp _ f2:FilterFactor)* {
         return newSecondaryFilter(first, rest), nil
@@ -490,22 +222,6 @@ FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
 }
 //end Filter grammar
 
-MapJobG <- "map" _ job:(EnrichDo) {
-        return DoNodeJob{Function: job}, nil
-}
-// Enrich Grammar
-EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
-    field, _ := cast.TryString(fld)
-    ex, _ := cast.TryString(expr)
-
-    expression, err := govaluate.NewEvaluableExpression(ex)
-    if err != nil {
-        panic(err)
-    }
-
-    return Enrich{Field: field, Expr: expression}, nil
-}
-//end enrich grammar
 
 //End Transform Jobs
 
@@ -524,13 +240,14 @@ StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
     }, nil
 }
 
-BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
-        return SinkJob{Type: "blackhole"}, nil
-}
+SinkInto <-first:Variable rest:(_ "=" _ "into()"){
+    streamTo,_ := first.(string)
+    return SinkJob{
+        Type: "into",
+        Args : streamTo,
+        },nil
+    }
 
-PlotG <- "plot" _ widget:(BarWidget) {
-    return SinkJob{Type: "plot", Args: widget}, nil
-}
 //End Sink Jobs
 
 

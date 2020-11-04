@@ -15,10 +15,8 @@ var posMap = map[int]string {
 }
 
 func parseAggArgs(alias interface{}, flt interface{}) (string, Filter, error) {
-
 	name := ""
 	filter := TrueFilter
-
 	if alias != nil {
 		if nm, ok := cast.TryString(alias); ok {
 			name = nm
@@ -26,7 +24,6 @@ func parseAggArgs(alias interface{}, flt interface{}) (string, Filter, error) {
 			return name, filter, errors.New("could not decode alias")
 		}
 	}
-
 	if flt != nil {
 		if fl, ok := flt.(Filter); ok {
 			filter = fl
