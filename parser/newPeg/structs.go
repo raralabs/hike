@@ -39,6 +39,10 @@ type SinkJob struct {
 }
 
 // Sink Jobs
+type Into struct {
+	StreamTo string
+}
+
 type Plot struct {
 	Type   string
 	Widget interface{}

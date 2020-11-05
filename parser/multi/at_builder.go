@@ -65,6 +65,7 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 	defer p.streamFromMu.Unlock()
 
 	for s := range p.streamTo {
+		fmt.Println("stream TO",s)
 		if tos, ok := p.streamFrom[s]; ok {
 			p.streamTo[s].toNodes = append(p.streamTo[s].toNodes, tos...)
 		}
@@ -104,8 +105,9 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	cmd = strings.TrimSpace(cmd)
 	//fmt.Println(cmd)
 	// cmd is now ready to be parsed by peg
+	fmt.Println("cmmdd",cmd)
 	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println("here",stages,cmd)
+	fmt.Println("stages",stages)
 	if err != nil {
 		log.Panic(err)
 	}

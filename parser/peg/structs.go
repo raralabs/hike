@@ -38,6 +38,9 @@ type SinkJob struct {
 	Header []string
 }
 
+type Into struct {
+	StreamTo string
+}
 // Sink Jobs
 type Plot struct {
 	Type   string

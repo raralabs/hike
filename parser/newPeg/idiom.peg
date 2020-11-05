@@ -591,9 +591,8 @@ StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
 
 SinkInto <-first:Variable rest:(_ "=" _ "into()"){
     streamTo,_ := first.(string)
-    return SinkJob{
-        Type: "into",
-        Args : streamTo,
+    return Into{
+        StreamTo:streamTo,
         },nil
     }
 

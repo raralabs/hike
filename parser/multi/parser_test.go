@@ -2,7 +2,6 @@ package multi
 
 import (
 	"context"
-	"fmt"
 	"github.com/Knetic/govaluate"
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/ext/sources"
@@ -17,12 +16,12 @@ import (
 
 func TestATBuild(t *testing.T) {
 	cmds := []string{
-		"fake(10) | filter(age>30) | stdout()",
+		"fake(5) | filter(age > 30) | stdout()",
+
 	}
 
 	builder := newATBuilder()
 	absTree := builder.Build(cmds...)
-	fmt.Println("Tree",absTree)
 	Plot(absTree)
 	nb := newNetBuilder()
 
