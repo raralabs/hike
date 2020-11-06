@@ -17,7 +17,7 @@ func IsComment(statement string)bool{
 
 func main(){
 	cmd:=`# transform
-          file(anything.csv) | filter(age>30) | filter(age>30) | b1 = into();
+          fake(10) | filter(age>30) | filter(age>30) | b1 = into();
           branch(b1) | agg counter = count() | stdout();
           file(anything.csv) | filter(age>30) | b1 = into();
           branch(b1) | filter(age>30) | stdout();

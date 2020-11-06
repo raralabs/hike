@@ -7,11 +7,11 @@ type SourceJob struct{
 }
 //source file reader type
 type SrcFile struct{
-	fileName string
+	FileName string
 }
 //source fake creator type
 type SrcFake struct{
-	number int64
+	Number int64
 }
 
 //source branch type

@@ -68,7 +68,7 @@ Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ stateme
 }
 
 
-Source <- BranchJobG/FileJobG
+Source <- BranchJobG/FileJobG/FakeJobG
 
 Transform <- AggJobG/DoJobG
 
@@ -78,7 +78,14 @@ Sink <- StdOutG/SinkInto
 
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
-        return SourceJob{Type: FILEJOB,OperateOn:SrcFile{fileName:fname}},nil
+        return SourceJob{Type: FILEJOB,OperateOn:SrcFile{FileName:fname}},nil
+    }
+    return nil, errors.New("could not decode source file name")
+}
+
+FakeJobG <- _ "fake(" _ numData:PositiveNumber _ ")" {
+    if n, ok := cast.TryInt(numData); ok {
+       return SourceJob{Type:FAKEJOB,OperateOn:SrcFake{Number:n}},nil
     }
     return nil, errors.New("could not decode source file name")
 }
@@ -536,7 +543,7 @@ BatchDo <- "batch(" _ num:Number? _ ")" {
 
 FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
         if f, ok := filt.(Filter); ok {
-                return TransformJob{Type:FILTER,OperateOn:f}, nil
+                return TransformJob{Type:DOJOB,OperateOn:f}, nil
         }
         return nil, errors.New("Could not parse filter")
 }

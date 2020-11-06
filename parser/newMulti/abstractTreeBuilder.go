@@ -2,22 +2,19 @@ package newMulti
 
 import (
 	"fmt"
-	"github.com/raralabs/canal/core/message"
-	"github.com/raralabs/canal/core/message/content"
-	"github.com/raralabs/canal/core/pipeline"
-	"github.com/raralabs/canal/core/transforms/agg"
-	canalSnk "github.com/raralabs/canal/ext/sinks"
 	canalSrc "github.com/raralabs/canal/ext/sources"
-	"github.com/raralabs/canal/ext/transforms/aggregates"
-	"github.com/raralabs/canal/ext/transforms/doFn"
+	"os"
+
+	"github.com/raralabs/canal/core/pipeline"
+
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/parser/at"
-	"github.com/raralabs/hike/parser/peg"
-	"github.com/raralabs/hike/plugins/canal/sinks"
+
 	"github.com/raralabs/hike/plugins/canal/sources"
+	"github.com/raralabs/hike/parser/newPeg"
 
 	"log"
-	"os"
+
 
 "sync"
 
@@ -92,21 +89,17 @@ func getNode(stg interface{},Id *int64 ) (*node){
 	*Id++
 	return n
 }
-//
-//func getExecutor(stg interface{}) pipeline.Executor{
-//
-//	return exec
-//}
 
-//func getSourceExecutor(stg interface{})pipeline.Executor
-func getExecutor(stg interface{}) pipeline.Executor {
-
+//generates all the source execcutors based on the types
+//input is the stg of type SourceJob and output is the
+//respective executor.
+func getSourceExecutor(stg newPeg.SourceJob)pipeline.Executor{
 	var exec pipeline.Executor
-	switch s := stg.(type) {
-	case peg.FileJob:
-		// FileJob can act as both a source or sink depending upon it's placement
-		fileName := s.Filename
+	switch stg.Type {
+	case newPeg.FILEJOB:
 
+		params := stg.OperateOn.(newPeg.SrcFile)
+		fileName := params.FileName
 		f, err := os.Open(fileName)
 		if err != nil {
 			log.Panic(err)
@@ -115,315 +108,28 @@ func getExecutor(stg interface{}) pipeline.Executor {
 		exec = sources.NewCsvReader(f, -1)
 		exec.SetName("file")
 
-	case peg.FakeJob:
-		// FileJob can act as both a source or sink depending upon it's placement
-		numData := s.NumData
-
+	case newPeg.FAKEJOB:
+		params := stg.OperateOn.(newPeg.SrcFake)
+		fmt.Println("iam here")
+		numData := params.Number
 		log.Printf("[INFO] Generating %d fake data", numData)
 		exec = canalSrc.NewFaker(numData, nil)
 		exec.SetName("fake")
-
-	case peg.DoNodeJob:
-
-		doneFunc := func(m message.Msg) bool {
-			cont := m.Content()
-
-			if cont != nil {
-				if v, ok := cont.Get("eof"); ok {
-					if v.Val == true {
-						return true
-					}
-				}
-			}
-			return false
-		}
-
-		switch doJob := s.Function.(type) {
-		case peg.Filter:
-			exec = doFn.FilterFunction(doJob, doneFunc)
-			exec.SetName("filter")
-
-		case peg.Select:
-			fields := doJob.Fields
-			exec = doFn.SelectFunction(fields, doneFunc)
-			exec.SetName("select")
-
-		case peg.Pick:
-			dsc := doJob.Desc
-			//if !strIn(availablePicks, dsc) {
-			//	log.Panicf("Can't pick by: %s", dsc)
-			//}
-			exec = doFn.PickFunction(dsc, doJob.Num, doneFunc)
-			exec.SetName("pick")
-
-		case peg.Sort:
-			fld := doJob.Field
-			exec = doFn.SortFunction(fld, doneFunc)
-			exec.SetName("sort")
-
-		case peg.Batch:
-			exec = doFn.BatchAgg(doneFunc)
-			exec.SetName("batch")
-
-		case peg.Enrich:
-			if expr := doJob.Expr; expr != nil {
-				exec = doFn.EnrichFunction(doJob.Field, expr, doneFunc)
-				exec.SetName("enrich")
-			}
-		}
-
-	case peg.AggNodeJob:
-		aggFuncs := s.Functions
-		var aggs []agg.IAggFuncTemplate
-
-		after := func(m message.Msg, proc pipeline.IProcessorForExecutor, cntnt, pContent []content.IContent) {
-
-			contents := m.Content()
-			if contents != nil {
-				if v, ok := contents.Get("eof"); ok {
-					if v.Val == true {
-						proc.Result(m, contents, nil)
-						proc.Done()
-						return
-					}
-				}
-			}
-			for i := range cntnt {
-				proc.Result(m, cntnt[i], pContent[i])
-			}
-		}
-
-		for _, ags := range aggFuncs {
-			switch ag := ags.(type) {
-			case peg.Count:
-				cnt := aggregates.NewCount(ag.Alias, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, cnt)
-
-			case peg.Max:
-				mx := aggregates.NewMax(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panicf("Max Filter Error: %v", err)
-					}
-					return match
-				})
-				aggs = append(aggs, mx)
-
-			case peg.Min:
-				mn := aggregates.NewMin(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, mn)
-
-			case peg.Avg:
-				avg := aggregates.NewAvg(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, avg)
-
-			case peg.Sum:
-				sum := aggregates.NewSum(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, sum)
-
-			case peg.Variance:
-				variance := aggregates.NewVariance(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, variance)
-
-			case peg.DistinctCount:
-				variance := aggregates.NewDCount(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, variance)
-
-			case peg.Mode:
-				variance := aggregates.NewMode(ag.Alias, ag.Field, func(m map[string]interface{}) bool {
-					if v, ok := m["eof"]; ok {
-						if v == true {
-							return false
-						}
-					}
-
-					match, err := ag.Filter(m)
-					if err != nil {
-						log.Panic(err)
-					}
-					return match
-				})
-				aggs = append(aggs, variance)
-
-			case peg.Quantile:
-				quantile := aggregates.NewQuantile(ag.Alias, ag.Field, ag.Qth,
-					func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-				aggs = append(aggs, quantile)
-
-			case peg.Covariance:
-				cov := aggregates.NewCovariance(ag.Alias, ag.Field1, ag.Field2,
-					func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-				aggs = append(aggs, cov)
-
-			case peg.Correlation:
-				corr := aggregates.NewCorrelation(ag.Alias, ag.Field1, ag.Field2,
-					func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-				aggs = append(aggs, corr)
-
-			case peg.PValue:
-				pval := aggregates.NewPValue(ag.Alias, ag.Field1, ag.Field2,
-					func(m map[string]interface{}) bool {
-						if v, ok := m["eof"]; ok {
-							if v == true {
-								return false
-							}
-						}
-
-						match, err := ag.Filter(m)
-						if err != nil {
-							log.Panic(err)
-						}
-						return match
-					})
-				aggs = append(aggs, pval)
-			}
-		}
-
-		aggregator := agg.NewAggregator(aggs, after, s.GroupBy...)
-
-		exec = aggregator.Function()
-		exec.SetName("agg")
-
-	case peg.SinkJob:
-
-		switch s.Type {
-		case "stdout":
-
-			exec = sinks.NewPrettyPrinter(os.Stdout, 10, s.Header...)
-			exec.SetName("stdout")
-
-		case "blackhole":
-			exec = canalSnk.NewBlackholeSink()
-			exec.SetName("blackhole")
-
-		default:
-			switch snkJob := s.Args.(type) {
-			case peg.Plot:
-				switch w := snkJob.Widget.(type) {
-				case peg.BarPlot:
-					exec = sinks.NewBarPlot(w.Title, w.XField, w.YField, w.BarWidth, w.BarGap)
-					exec.SetName("plot")
-				}
-			}
-		}
 	}
-	if exec == nil {
-		return nil
-	}
+	return exec
+}
 
+func getExecutor(stg interface{}) pipeline.Executor {
+
+	var exec pipeline.Executor
+	switch stg.(type) {
+	case newPeg.SourceJob:
+		currentStg := stg.(newPeg.SourceJob)
+		exec = getSourceExecutor(currentStg)
+
+	case newPeg.TransformJob:
+		fmt.Println("into the transform job")
+
+	}
 	return exec
 }
