@@ -1,9 +1,39 @@
 package newPeg
 
-type stage uint8
+type src uint8
 
 const(
-	SOURCE stage = iota+1
-	TRANSFORM
-	SINK
+	FILEJOB	src = iota+1
+	FAKEJOB
+	BRANCHJOB
+)
+
+type trns uint8
+
+const(
+	AGGJOB trns = iota +1
+	DOJOB
+	MAPJOB
+)
+
+type aggregator uint8
+
+const(
+	COUNT aggregator = iota +1
+	MAX
+)
+
+type dotype uint8
+
+const(
+	FILTER dotype = iota +1
+)
+
+type snk uint8
+
+const(
+	STDOUT snk = iota+1
+	BLACKHOLE
+	PLOT
+	INTO
 )

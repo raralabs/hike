@@ -16,8 +16,11 @@ import (
 
 func TestATBuild(t *testing.T) {
 	cmds := []string{
-		"fake(5) | filter(age > 30) | stdout()",
-
+		"fake(5) | select(age, last_name) into s1",
+		"s1 | stdout()",
+		"s1 | filter(age > 30) | stdout()",
+		"s1 | map twice_age = 2 * age | stdout()",
+		"s1 | map half_age = age / 2 | stdout()",
 	}
 
 	builder := newATBuilder()

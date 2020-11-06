@@ -1,7 +1,7 @@
 package multi
 
 import (
-	"fmt"
+
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/message/content"
 	"github.com/raralabs/canal/core/pipeline"
@@ -37,8 +37,6 @@ func newATBuilder() *atBuilder {
 	}
 }
 
-
-
 func (p *atBuilder) Build(cmds ...string) at.AT {
 
 	// Remove ";" from the end of each command if present.
@@ -65,12 +63,10 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 	defer p.streamFromMu.Unlock()
 
 	for s := range p.streamTo {
-		fmt.Println("stream TO",s)
 		if tos, ok := p.streamFrom[s]; ok {
 			p.streamTo[s].toNodes = append(p.streamTo[s].toNodes, tos...)
 		}
 	}
-	fmt.Println("sources",srcs)
 	absTree := &tree{sources: srcs}
 
 	return absTree
@@ -104,10 +100,9 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	}
 	cmd = strings.TrimSpace(cmd)
 	//fmt.Println(cmd)
+
 	// cmd is now ready to be parsed by peg
-	fmt.Println("cmmdd",cmd)
 	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println("stages",stages)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -117,7 +112,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	var firstNode *node
 
 	for i, stg := range stgs {
-		fmt.Println("Stages",stg)
 		exec := getExecutor(stg)
 		if exec == nil {
 			log.Panic(stg)
@@ -148,10 +142,10 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 		// If last node, and streamTo exists, add to streamTo
 		if i == len(stgs)-1 && streamToName != "" {
 			p.streamToMu.Lock()
-			var keys []string
-			for k := range p.streamTo {
-				keys = append(keys, k)
-			}
+			//var keys []string
+			//for k := range p.streamTo {
+			//	keys = append(keys, k)
+			//}
 			if _, ok := p.streamTo[streamToName]; ok {
 				p.streamToMu.Unlock()
 				log.Panic("Can't have two different pipeline streaming to single stream")
@@ -165,6 +159,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 	if firstNode == nil {
 		return nil, startId
 	}
+
 	return firstNode, startId
 }
 

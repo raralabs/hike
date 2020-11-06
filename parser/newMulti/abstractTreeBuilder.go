@@ -15,11 +15,12 @@ import (
 	"github.com/raralabs/hike/parser/peg"
 	"github.com/raralabs/hike/plugins/canal/sinks"
 	"github.com/raralabs/hike/plugins/canal/sources"
+
 	"log"
 	"os"
-	"strings"
-	"sync"
-	"unicode"
+
+"sync"
+
 )
 
 type atBuilder struct {
@@ -27,8 +28,8 @@ type atBuilder struct {
 	streamFrom               map[string][]at.Node
 	streamTo                 map[string]*node
 }
-//functions that builds the abstract tree
-func newATBuilder() *atBuilder {
+
+func NewATBuilder() *atBuilder {
 	return &atBuilder{
 		streamFromMu: &sync.Mutex{},
 		streamToMu:   &sync.Mutex{},
@@ -37,147 +38,67 @@ func newATBuilder() *atBuilder {
 	}
 }
 
-
-
-func (p *atBuilder) Build(cmds ...string) at.AT {
-
-	// Remove ";" from the end of each command if present.
-	// Remove "into xxx" from the end.
-	//		-> Add the output coming to "xxx" to the new input if the stream starts with "xxx".
-	//		Eg: fake() | select(age) into s1
-	//			s1 | map twice_age = 2*age
-	//		-> In such cases the output of select must go to the map.
-
+func (p *atBuilder) BuildAT(cmds []interface{}) at.AT{
 	startId := int64(1)
 	var srcs []at.Node
-
-	for _, c := range cmds {
-			var src at.Node
-			src, startId = p.buildSinglePipe(startId, c)
-			if src != nil {
-				srcs = append(srcs, src)
+	for _,command := range cmds{
+		var src at.Node
+		src, startId = p.buildSinglePipeline(startId,cast.ToIfaceSlice(command))
+		if src != nil{
+			srcs = append(srcs,src)
 		}
 	}
-
 	p.streamToMu.Lock()
 	p.streamFromMu.Lock()
 	defer p.streamToMu.Unlock()
 	defer p.streamFromMu.Unlock()
 
 	for s := range p.streamTo {
-		fmt.Println("Stream TO",s)
 		if tos, ok := p.streamFrom[s]; ok {
 			p.streamTo[s].toNodes = append(p.streamTo[s].toNodes, tos...)
 		}
 	}
+
 	absTree := &tree{sources: srcs}
 
 	return absTree
+
+
 }
 
-func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
-	cmd = strings.TrimSpace(cmd)
-	if cmd[len(cmd)-1] == ';' {
-		cmd = cmd[:len(cmd)-1]
-	}
 
-	// Check if the output goes to some stream
-	cmds := strings.Fields(cmd)
-	streamToName := ""
-	streamFromName := ""
-
-	if len(cmds) > 1{
-		if cmds[len(cmds)-2] == "into" {
-			streamToName = cmds[len(cmds)-1]
-			cmds = cmds[:len(cmds)-2]
-			cmd = strings.Join(cmds, " ")
-		}
-	}
-
-	if isVariable(cmds[0]) {
-		// This means the pipeline starts with stream.
-		streamFromName = cmds[0]
-		cmds := strings.Split(cmd, "|")
-		cmd = strings.Join(cmds[1:], "|")
-	}
-	cmd = strings.TrimSpace(cmd)
-	// cmd is now ready to be parsed by peg
-	stages, err := peg.Parse("", []byte(cmd))
-	fmt.Println("stages",stages)
-	if err != nil {
-		log.Panic(err)
-	}
-	stgs := cast.ToIfaceSlice(stages)
-
-	var lastNode *node
+func (p *atBuilder) buildSinglePipeline(Id int64,command []interface{})(at.Node, int64) {
 	var firstNode *node
-
-	for i, stg := range stgs {
-		exec := getExecutor(stg)
-		if exec == nil {
-			log.Panic(stg)
-		}
-		n := &node{
-			id:    startId,
-			exec:  exec,
-			added: true,
-		}
-		startId++
-
-		if i > 0 && lastNode != nil {
-			lastNode.toNodes = append(lastNode.toNodes, n)
-		}
-
-		// If first node, and streamFromName exists, add to streamFrom
-		if i == 0 {
-			if streamFromName != "" {
-				p.streamFromMu.Lock()
-				p.streamFrom[streamFromName] = append(p.streamFrom[streamFromName], n)
-				p.streamFromMu.Unlock()
-			} else {
-				// No streamFromName implies this node must be a source
-				firstNode = n
-			}
-		}
-
-		// If last node, and streamTo exists, add to streamTo
-		if i == len(stgs)-1 && streamToName != "" {
-			p.streamToMu.Lock()
-			var keys []string
-			for k := range p.streamTo {
-				keys = append(keys, k)
-			}
-			fmt.Println(keys)
-			if _, ok := p.streamTo[streamToName]; ok {
-				p.streamToMu.Unlock()
-				log.Panic("Can't have two different pipeline streaming to single stream")
-			}
-			p.streamTo[streamToName] = n
-			p.streamToMu.Unlock()
-		}
-
-		lastNode = n
+	for _, eachStage := range command {
+		exec := getExecutor(eachStage)
+		fmt.Println(firstNode,exec)
 	}
-	if firstNode == nil {
-		return nil, startId
-	}
-	return firstNode, startId
+
+		return firstNode, Id
+
 
 }
 
-func isVariable(v string) bool {
-	if !(unicode.IsLetter(rune(v[0])) || v[0] == '_') {
-		return false
+func getNode(stg interface{},Id *int64 ) (*node){
+	exec := getExecutor(stg)
+	if exec == nil {
+		log.Panic(stg)
 	}
-
-	for _, l := range v {
-		if !(unicode.IsLetter(l) || l == '_' || unicode.IsDigit(l)) {
-			return false
-		}
+	n := &node{
+		id:    *Id,
+		exec:  exec,
+		added: true,
 	}
-	return true
+	*Id++
+	return n
 }
+//
+//func getExecutor(stg interface{}) pipeline.Executor{
+//
+//	return exec
+//}
 
+//func getSourceExecutor(stg interface{})pipeline.Executor
 func getExecutor(stg interface{}) pipeline.Executor {
 
 	var exec pipeline.Executor

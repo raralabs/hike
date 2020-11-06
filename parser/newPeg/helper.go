@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"github.com/raralabs/hike/utils/LanguageProcessor"
 	"github.com/raralabs/canal/utils/cast"
 )
 
@@ -82,16 +81,4 @@ func getParamList(first, rest interface{}) []string {
 	}
 
 	return strs
-}
-//removes the whole statement if the criteria is met
-func RemoveStatement(command string,criteria func(string)bool)string{
-	var filteredStatements []string
-	tokenizedStatements := LanguageProcessor.Tokenize(command ,"\n")
-	for _,statement  := range tokenizedStatements{
-		if !criteria(statement){
-			filteredStatements = append(filteredStatements,statement)
-		}
-	}
-	joinedStatements := strings.Join(filteredStatements,"\n")
-	return joinedStatements
 }

@@ -32,11 +32,11 @@ type AggNodeJob struct {
 	GroupBy   []string
 }
 
-type SinkJob struct {
-	Type string
-	Args interface{}
-	Header []string
-}
+//type SinkJob struct {
+//	Type string
+//	Args interface{}
+//	Header []string
+//}
 
 // Sink Jobs
 type Into struct {
@@ -57,7 +57,7 @@ type BarPlot struct {
 }
 
 // Do Functions
-type Filter func(map[string]interface{}) (bool, error)
+//type Filter func(map[string]interface{}) (bool, error)
 
 type BranchJob struct{
 	BranchName string
@@ -97,10 +97,10 @@ type Enrich struct {
 
 // Aggregator Functions
 
-type Count struct {
-	Alias  string
-	Filter Filter
-}
+//type Count struct {
+//	Alias  string
+//	Filter Filter
+//}
 
 type Max struct {
 	Alias  string

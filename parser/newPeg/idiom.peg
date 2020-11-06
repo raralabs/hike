@@ -78,14 +78,14 @@ Sink <- StdOutG/SinkInto
 
 FileJobG <- _ "file(" _ filename:FileName _ ")" {
     if fname, ok := cast.TryString(filename); ok {
-        return FileJob{Filename: fname}, nil
+        return SourceJob{Type: FILEJOB,OperateOn:SrcFile{fileName:fname}},nil
     }
     return nil, errors.New("could not decode source file name")
 }
 
 BranchJobG <- "branch"_"(" _ br:IDENTIFIER ")"{
     if branchName,ok := cast.TryString(br);ok{
-    return BranchJob{BranchName:branchName},nil
+    return SourceJob{Type:BRANCHJOB,OperateOn:SrcBranch{identifier:branchName}},nil
     }
     return nil,errors.New("could not identify the branch name")
 }
@@ -106,8 +106,8 @@ AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         }
 
         ps, _ := params.([]string)
+        return TransformJob{Type:AGGJOB,OperateOn:AggNodeJob{Functions:jobs,GroupBy: ps}},nil
 
-        return AggNodeJob{Functions: jobs, GroupBy: ps}, nil
 }
 
 
@@ -536,7 +536,7 @@ BatchDo <- "batch(" _ num:Number? _ ")" {
 
 FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
         if f, ok := filt.(Filter); ok {
-                return f, nil
+                return TransformJob{Type:FILTER,OperateOn:f}, nil
         }
         return nil, errors.New("Could not parse filter")
 }
@@ -579,20 +579,21 @@ StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
 
     if header, ok := params.([]string); ok {
         return SinkJob{
-            Type: "stdout",
-            Header: header,
-        }, nil
+            Type: STDOUT,
+            OperateOn:StdOut{Header:header},
+            },nil
     }
     return SinkJob{
-        Type: "stdout",
-        Header: nil,
+        Type: STDOUT,
+        OperateOn:StdOut{Header:nil},
     }, nil
 }
 
 SinkInto <-first:Variable rest:(_ "=" _ "into()"){
     streamTo,_ := first.(string)
-    return Into{
-        StreamTo:streamTo,
+    return SinkJob{
+        Type: INTO,
+        OperateOn:InTo{streamTo:streamTo},
         },nil
     }
 
