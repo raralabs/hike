@@ -17,11 +17,7 @@ func IsComment(statement string)bool{
 
 func main(){
 	cmd:=`# transform
-          fake(10) | filter(age>30) | filter(age>30) | b1 = into();
-          branch(b1) | agg counter = count() | stdout();
-          file(anything.csv) | filter(age>30) | b1 = into();
-          branch(b1) | filter(age>30) | stdout();
-          branch(b1) | agg by last_name last_name_count = count() | stdout();;`
+          fake(10) | filter(age>30) | filter(age>30) | b1 = into();;`
 
 	//remove comments from command
 	qryPreprocessor := LanguageProcessor.InitPreProcessor(cmd)
@@ -30,6 +26,7 @@ func main(){
 	fmt.Println("cleaned",cleanedCommand)
 	stg,_ := newPeg.Parse("", []byte(cleanedCommand))
 	fmt.Println("Stage",stg)
+
 	builder := newMulti.NewATBuilder()
 	absTree := builder.BuildAT(stg.([]interface{}))
 	fmt.Println(absTree)

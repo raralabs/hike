@@ -79,3 +79,96 @@ steps:
     
     4. Build Abstract Tree
     Then its BuildAT func is called to create the abstract tree.
+    
+    
+    5. NetBuilder
+    newNetBuilder() initializes the NetBuilder. The Build reciever 
+    Build() builds the pipeline as per the Abstract tree
+    
+## FUNCTIONS
+---
+####Current Supported Functions
+
+#####Source functions
+
+    File Reader 
+        - supported file format: csv only
+        - syntax : file(FileName.csv)
+        - usecase: 
+            file(userinfo.csv) | filter(age<30) | stdout();;
+        
+    Fake
+        - generates fake data
+        - syntax : fake(integer)
+        - usecase:
+            fake(10) | filter(age<30) | stdout();;    
+
+#####Transform functions
+    
+    Aggregator Functions
+        1. count
+            - counts the number of particular data in the stream
+            - syntax alias = count() 
+            - usecase:
+                fake(10) | filter(age<30) | s1=into();
+                s1 | count_of_age_less_than_30 = count() |stdout();; 
+        2. max
+        3. min
+        4. sum
+        5. variance
+        6. avg  
+    
+    Do Functions
+        1. filter
+            -filters the data based on the condition provided.
+            - syntax 
+                filter(age<30) 
+            - usecase:
+                file(userinfo.csv) | filter(age<30) | stdout();;     
+        
+        2. select
+            - select selects one or more fields form the stream
+            - syntax 
+                select(fieldName1,fieldName2)
+            - usecase:
+                source | select (field1,field2) | s1 = into();;
+        3. sort
+            - sorts the data
+            - syntax
+                sort() by alias
+            - usecase:
+                source | sort() by field1 | sink               
+        
+        4. batch
+            -
+            - syntax
+                batch(integer)
+            - usecase:
+        
+        5. pick
+            - picks the given number of data
+            - syntax
+                pick(int)
+            - usecase:
+                source | pick(10) |sink
+                
+                                 
+            
+##### Sink Functions
+    (currently supported)
+    Stdout
+        - prints the stream into the console
+        - syntax : stdout()
+        - usecase:
+            file(userinfo.csv)| zero or more transform functions | stdout();;
+        
+    Plot
+        - It is used to print the abstract tree on the console.
+        - syntax: plot(absTree)
+        - usecase:
+            steps for the abstree building
+            plot(abstree)
+    
+    Blackhole
+    
+                                   

@@ -1,7 +1,6 @@
 package multi
 
 import (
-
 	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/message/content"
 	"github.com/raralabs/canal/core/pipeline"
@@ -36,6 +35,8 @@ func newATBuilder() *atBuilder {
 		streamTo:     make(map[string]*node),
 	}
 }
+
+
 
 func (p *atBuilder) Build(cmds ...string) at.AT {
 
@@ -73,13 +74,7 @@ func (p *atBuilder) Build(cmds ...string) at.AT {
 }
 
 func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) {
-	cmd = strings.TrimSpace(cmd)
-	if cmd[len(cmd)-1] == ';' {
-		cmd = cmd[:len(cmd)-1]
-	}
-
 	// Check if the output goes to some stream
-
 	cmds := strings.Fields(cmd)
 	streamToName := ""
 	streamFromName := ""
@@ -103,6 +98,7 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 
 	// cmd is now ready to be parsed by peg
 	stages, err := peg.Parse("", []byte(cmd))
+
 	if err != nil {
 		log.Panic(err)
 	}
@@ -113,9 +109,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 
 	for i, stg := range stgs {
 		exec := getExecutor(stg)
-		if exec == nil {
-			log.Panic(stg)
-		}
 		n := &node{
 			id:    startId,
 			exec:  exec,
@@ -142,10 +135,6 @@ func (p *atBuilder) buildSinglePipe(startId int64, cmd string) (at.Node, int64) 
 		// If last node, and streamTo exists, add to streamTo
 		if i == len(stgs)-1 && streamToName != "" {
 			p.streamToMu.Lock()
-			//var keys []string
-			//for k := range p.streamTo {
-			//	keys = append(keys, k)
-			//}
 			if _, ok := p.streamTo[streamToName]; ok {
 				p.streamToMu.Unlock()
 				log.Panic("Can't have two different pipeline streaming to single stream")
@@ -176,10 +165,12 @@ func isVariable(v string) bool {
 	return true
 }
 
+
 func getExecutor(stg interface{}) pipeline.Executor {
 
 	var exec pipeline.Executor
 	switch s := stg.(type) {
+
 	case peg.FileJob:
 		// FileJob can act as both a source or sink depending upon it's placement
 		fileName := s.Filename

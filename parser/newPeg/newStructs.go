@@ -16,7 +16,7 @@ type SrcFake struct{
 
 //source branch type
 type SrcBranch struct{
-	identifier string
+	Identifier string
 }
 //---------------------------------------------------------------------------------------------//
 
@@ -30,6 +30,9 @@ type TransformJob struct{
 type Filter func(map[string]interface{}) (bool, error)
 
 //all aggregator transforms
+type Aggregator struct{
+	Type aggregator
+}
 type Count struct {
 	Alias  string
 	Filter Filter
@@ -50,7 +53,8 @@ type StdOut struct{
 }
 
 type InTo struct{
-	streamTo string
+	StreamTo string
 }
+
 
 
