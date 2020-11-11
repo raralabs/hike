@@ -151,8 +151,27 @@ steps:
                 pick(int)
             - usecase:
                 source | pick(10) |sink
-                
-                                 
+        
+        6. enrich 
+            - enriches the data
+            - syntax
+                newField = condtion       
+            usecase:
+                - used with map
+                                  
+                     - s1| map twice_age = 2*age |stdout();
+                               -----------------
+                     underlined one is the enrich syntax
+                                            
+    Map functions             
+        map
+            - maps the given condition to the field. Basically it 
+            enriches the data
+            - takes the EnrichDo function 
+            - syntax
+                map Enrich function
+            - usecase:
+                - s1| map twice_age = 2*age |stdout();                               
             
 ##### Sink Functions
     (currently supported)
