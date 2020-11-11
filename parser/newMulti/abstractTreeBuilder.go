@@ -1,6 +1,7 @@
 package newMulti
 
 import (
+
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/parser/at"
@@ -130,6 +131,7 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 				if prevNode ==nil {
 					log.Panic("Sink must get data from one or more stages")
 				}else{
+					prevNode.toNodes = append(prevNode.toNodes, newNode)
 
 				}
 			}

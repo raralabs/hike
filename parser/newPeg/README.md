@@ -113,6 +113,7 @@ steps:
                 fake(10) | filter(age<30) | s1=into();
                 s1 | count_of_age_less_than_30 = count() |stdout();; 
         2. max
+            - 
         3. min
         4. sum
         5. variance
@@ -132,6 +133,7 @@ steps:
                 select(fieldName1,fieldName2)
             - usecase:
                 source | select (field1,field2) | s1 = into();;
+        
         3. sort
             - sorts the data
             - syntax
@@ -182,12 +184,12 @@ steps:
             file(userinfo.csv)| zero or more transform functions | stdout();;
         
     Plot
-        - It is used to print the abstract tree on the console.
-        - syntax: plot(absTree)
+        - It is used to plot the data.
+        - syntax: plot(widget)
         - usecase:
-            steps for the abstree building
-            plot(abstree)
+            plot(BarWidget)
     
     Blackhole
+        
     
                                    

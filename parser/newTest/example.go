@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/raralabs/hike/parser/newPeg"
 	"github.com/raralabs/hike/utils/LanguageProcessor"
 	"github.com/raralabs/hike/parser/newMulti"
+	"time"
 )
 
 
@@ -17,7 +19,7 @@ func IsComment(statement string)bool{
 
 func main(){
 	cmd:=`# transform
-          fake(10) | filter(age>30) | filter(age>30) | b1 = into();;`
+          fake(10) | filter(age>30) | filter(age>30) | stdout();;`
 
 	//remove comments from command
 	qryPreprocessor := LanguageProcessor.InitPreProcessor(cmd)
@@ -30,5 +32,11 @@ func main(){
 	builder := newMulti.NewATBuilder()
 	absTree := builder.BuildAT(stg.([]interface{}))
 	fmt.Println(absTree)
+	nb := newMulti.NewNetBuilder()
+
+	p := nb.Build(1, absTree)
+	c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
+
+	p.Start(c, cancel)
 }
 

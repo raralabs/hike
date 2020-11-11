@@ -13,7 +13,7 @@ type netBuilder struct {
 
 }
 
-func newNetBuilder() *netBuilder {
+func NewNetBuilder() *netBuilder {
 	return &netBuilder{}
 }
 
