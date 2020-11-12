@@ -20,7 +20,7 @@ var secondaryOperatorMap = map[string]func(l, r bool) (bool, error){
 
 // newPrimaryFilter returns a filter defined by op.
 func newPrimaryFilter(name string, op, val interface{}) Filter {
-
+	fmt.Println("Get",name,op,val)
 	operator := ""
 	switch op := op.(type) {
 	case []uint8:
@@ -30,7 +30,6 @@ func newPrimaryFilter(name string, op, val interface{}) Filter {
 	}
 
 	condition := fmt.Sprintf("%s %s %v", name, operator, val)
-
 	expression, err := govaluate.NewEvaluableExpression(condition)
 	if err != nil {
 		panic(err)

@@ -215,6 +215,8 @@ BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable 
 FilterDo <- "filter(" _ filt:FilterMulti _ ")" {
         if f, ok := filt.(Filter); ok {
                 return TransformJob{f, nil
+
+
         }
         return nil, errors.New("Could not parse filter")
 }

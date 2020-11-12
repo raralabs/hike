@@ -605,11 +605,11 @@ SinkInto <-first:Variable rest:(_ "=" _ "into()"){
     }
 
 BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
-        return SinkJob{Type: "blackhole"}, nil
+        return SinkJob{Type: BLACKHOLE}, nil
 }
 
 PlotG <- "plot" _ widget:(BarWidget) {
-    return SinkJob{Type: "plot", Args: widget}, nil
+    return SinkJob{Type: PLOT, Args: widget}, nil
 }
 
 BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {
