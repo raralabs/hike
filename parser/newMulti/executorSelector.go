@@ -347,6 +347,8 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 				exec.SetName("enrich")
 			}
 		}
+	case newPeg.JOINJOB:
+		stgContent := stg.OperateOn.(newPeg.JoinNode)
 
 	}
 	return exec

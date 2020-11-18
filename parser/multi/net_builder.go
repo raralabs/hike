@@ -22,7 +22,7 @@ func (nb *netBuilder) Build(id uint32, tree at.AT) *pipeline.Pipeline {
 	sources := tree.Sources()
 
 	p := pipeline.NewPipeline(id)
-
+	//traverse through each source and its child in AT and build the pipeline
 	for _, s := range sources {
 		src := p.AddSource(s.Executor().Name())
 		sp := src.AddProcessor(opts, s.Executor())

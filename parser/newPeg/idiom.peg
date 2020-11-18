@@ -70,7 +70,7 @@ Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ stateme
 
 Source <- BranchJobG/FileJobG/FakeJobG/SecSource
 
-Transform <- AggJobG/DoJobG
+Transform <- AggJobG/DoJobG/JoinJobG
 
 Sink <- StdOutG/SinkInto/PlotG
 
@@ -588,7 +588,17 @@ FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
         return string(c.text), nil
 }
 //end Filter grammar
+JoinJobG <- InnerJoin/LeftOuterJoin/RightOuterJoin/FullOuterJoin/
 
+//Join rules
+
+InnerJoin <- "innerjoin()"
+
+LeftOuterJoin <- "leftouterjoin()"
+
+RightOuterJoin <- "rightouterjoin()"
+
+FullouterJoin <- "fullouterjoin()"
 
 //End Transform Jobs
 

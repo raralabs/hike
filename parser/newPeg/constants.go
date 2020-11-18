@@ -15,6 +15,7 @@ const(
 	AGGJOB trns = iota +1
 	DOJOB
 	MAPJOB
+	JOINJOB
 )
 
 type aggregator uint8
