@@ -6,6 +6,7 @@ const(
 	FILEJOB	src = iota+1
 	FAKEJOB
 	BRANCHJOB
+	SECSOURCE
 )
 
 type trns uint8

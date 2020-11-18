@@ -14,6 +14,11 @@ type SrcFake struct{
 	Number int64
 }
 
+//secondary sources
+type SrcSec struct{
+	Sources []string
+}
+
 //source branch type
 type SrcBranch struct{
 	Identifier string

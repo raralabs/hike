@@ -176,7 +176,7 @@ BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
 }
 
 PlotG <- "plot" _ widget:(BarWidget) {
-    return SinkJob{Type: "plot", Args: widget}, nil
+    return SinkJob{Type: PLOT, OperateOn:Plot{Type:"plot",Widget: widget}}, nil
 }
 
 BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {

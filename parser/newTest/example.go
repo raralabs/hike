@@ -18,8 +18,7 @@ func IsComment(statement string)bool{
 }
 
 func main(){
-	cmd:=`# transform
-          fake(10) | agg alias = dcount(age) | stdout();;`
+	cmd:=`fake(10) | filter(age>30) | agg alias = sum(age) | stdout();;`
 
 	//remove comments from command
 	qryPreprocessor := LanguageProcessor.InitPreProcessor(cmd)

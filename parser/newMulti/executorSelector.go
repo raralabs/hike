@@ -30,11 +30,20 @@ func getExecutor(stg interface{}) executorPod {
 	switch stg.(type) {
 	case newPeg.SourceJob:
 		currentStg := stg.(newPeg.SourceJob)
-		if currentStg.Type == newPeg.BRANCHJOB{
-			operator := currentStg.OperateOn.(newPeg.SrcBranch)
-			streamFrom := operator.Identifier
-			executor = executorPod{exec,false, streamFrom,"SOURCE"}
-		}else{
+		if currentStg.Type == newPeg.BRANCHJOB||currentStg.Type== newPeg.SECSOURCE{
+			switch currentStg.Type {
+			case newPeg.BRANCHJOB:
+				operator := currentStg.OperateOn.(newPeg.SrcBranch)
+				streamFrom := operator.Identifier
+				executor = executorPod{exec,false, streamFrom,"SOURCE"}
+
+			case newPeg.SECSOURCE:
+				operator := currentStg.OperateOn.(newPeg.SrcSec)
+				streamFrom := operator.Sources
+				executor = executorPod{exec,false, streamFrom,"SOURCE"}
+
+			}
+			}else{
 			exec = getSourceExecutor(currentStg)
 			executor = executorPod{exec,true,"","SOURCE"}
 		}
@@ -47,6 +56,7 @@ func getExecutor(stg interface{}) executorPod {
 	case newPeg.SinkJob:
 		currentStg := stg.(newPeg.SinkJob)
 		if currentStg.Type == newPeg.INTO{
+
 			operator := currentStg.OperateOn.(newPeg.InTo)
 			streamTo := operator.StreamTo
 			executor = executorPod{exec,false,streamTo,"SINK"}

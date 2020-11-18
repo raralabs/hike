@@ -2,7 +2,7 @@
 package newPeg
 }
 
-Command <- command:Statement rest:((_ Statement)* _ TOK_SEMICOLON){
+Command <- command:Statement rest:((_ Statement )* _ TOK_SEMICOLON ){
         commands := []interface{}{(command.([]interface{}))}
         for _,val := range(cast.ToIfaceSlice(rest)){
         		_,ok := val.([]interface{})
@@ -33,42 +33,42 @@ Command <- command:Statement rest:((_ Statement)* _ TOK_SEMICOLON){
 
 
 
-Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ TOK_SEMICOLON){
+Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ TOK_SEMICOLON _){
     stages := []interface{}{statement}
-    	rst := cast.ToIfaceSlice(rest)
-    	for _,val := range(rst){
+        	rst := cast.ToIfaceSlice(rest)
 
-    		_,ok := val.([]interface{})
-    		if ok {
-    			newVal := cast.ToIfaceSlice(val)
+        	for _,val := range(rst){
 
-    			if len(newVal) > 0 {
-    				firstVal := newVal[0]
-    				_, ok1 := firstVal.([]interface{})
-    				if ok1 {
-    					finalVal := cast.ToIfaceSlice(firstVal)
-    					if len(finalVal) == 4 {
-    						stages = append(stages, finalVal[3])
+        		_,ok := val.([]interface{})
+        		if ok {
+        			newVal := cast.ToIfaceSlice(val)
+        			for _,item := range newVal{
+    					_, success := item.([]interface{})
+    					if success{
+    						newItem := cast.ToIfaceSlice(item)
+
+    						if len(newItem) == 4 {
+    							stages = append(stages, newItem[3])
+    						}
     					}
     				}
-    			}
+        		}else{
+        			_,ok:= val.([]uint8)
+        			if !ok{
+        				stages = append(stages,val)
 
-    		}else{
-    			_,ok:= val.([]uint8)
-    			if !ok{
-    				stages = append(stages,val)
+        			}
 
-    			}
+        		}
 
-    		}
+        	}
 
-    	}
-
-    	return stages,nil
-}
+        	return stages,nil
+    }
 
 
-Source <- BranchJobG/FileJobG/FakeJobG
+
+Source <- BranchJobG/FileJobG/FakeJobG/SecSource
 
 Transform <- AggJobG/DoJobG
 
@@ -95,6 +95,17 @@ BranchJobG <- "branch"_"(" _ br:IDENTIFIER ")"{
     return SourceJob{Type:BRANCHJOB,OperateOn:SrcBranch{Identifier:branchName}},nil
     }
     return nil,errors.New("could not identify the branch name")
+}
+
+SecSource <- src1:IDENTIFIER _ ","_ src2:IDENTIFIER{
+    var secSources []string
+    if  source1,ok := cast.TryString(src1);ok{
+        secSources = append(secSources,source1)
+    }
+    if source2,ok := cast.TryString(src2);ok{
+        secSources = append(secSources,source2)
+    }
+    return SourceJob{Type:SECSOURCE,OperateOn:SrcSec{Sources:secSources}},nil
 }
 
 //End Source Jobs
@@ -609,7 +620,7 @@ BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
 }
 
 PlotG <- "plot" _ widget:(BarWidget) {
-    return SinkJob{Type: PLOT, Args: widget}, nil
+    return SinkJob{Type: PLOT, OperateOn:Plot{Type:"plot",Widget: widget}}, nil
 }
 
 BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {
