@@ -97,14 +97,17 @@ BranchJobG <- "branch"_"(" _ br:IDENTIFIER ")"{
     return nil,errors.New("could not identify the branch name")
 }
 
-SecSource <- src1:IDENTIFIER _ ","_ src2:IDENTIFIER{
+SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
     var secSources []string
-    if  source1,ok := cast.TryString(src1);ok{
-        secSources = append(secSources,source1)
-    }
-    if source2,ok := cast.TryString(src2);ok{
-        secSources = append(secSources,source2)
-    }
+     if  source1,ok := cast.TryString(src1);ok{
+            secSources = append(secSources,source1)
+        }
+     if rest!= nil{
+    		restVal := cast.ToIfaceSlice(rest)
+    		source2 := restVal[len(restVal)-1]
+    		secSources = append(secSources,source2.(string))
+    	}
+
     return SourceJob{Type:SECSOURCE,OperateOn:SrcSec{Sources:secSources}},nil
 }
 
@@ -588,17 +591,7 @@ FilterPriOp <- "==" / "!=" / "<" / ">" / "<=" / ">=" {
         return string(c.text), nil
 }
 //end Filter grammar
-JoinJobG <- InnerJoin/LeftOuterJoin/RightOuterJoin/FullOuterJoin/
 
-//Join rules
-
-InnerJoin <- "innerjoin()"
-
-LeftOuterJoin <- "leftouterjoin()"
-
-RightOuterJoin <- "rightouterjoin()"
-
-FullouterJoin <- "fullouterjoin()"
 
 //End Transform Jobs
 

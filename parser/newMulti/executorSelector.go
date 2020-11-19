@@ -348,7 +348,7 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 			}
 		}
 	case newPeg.JOINJOB:
-		stgContent := stg.OperateOn.(newPeg.JoinNode)
+		fmt.Println("go go")
 
 	}
 	return exec

@@ -22,6 +22,7 @@ type atBuilder struct {
 	streamFromMu, streamToMu *sync.Mutex// locks to avoid the race conditions
 	streamFrom               map[string][]at.Node //keeps records of where the SECSOURCE will pass the msg
 	streamTo                 map[string]*node //keeps records of where INTO sinks will pass the msg
+
 }
 
 //function that initializes the abstract tree builder
@@ -123,16 +124,7 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 						p.streamFromMu.Unlock()
 					}
 				}
-				// If last node, and streamTo exists, add to streamTo
-				if i == len(statement)-2 && streamToName != "" {
-					p.streamToMu.Lock()
-					if _, ok := p.streamTo[streamToName]; ok {
-						p.streamToMu.Unlock()
-						log.Panic("Can't have two different pipeline streaming to single stream")
-					}
-					p.streamTo[streamToName] = newNode
-					p.streamToMu.Unlock()
-				}
+
 				if prevNode!=nil{
 					prevNode.toNodes = append(prevNode.toNodes, newNode)
 				}
@@ -150,7 +142,17 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 				}
 			}
 			if exec.StageType == "SINK"{
-				streamToName = exec.StreamLabel.(string)
+				if prevNode != nil{
+					streamToName = exec.StreamLabel.(string)
+					p.streamToMu.Lock()
+					if _, ok := p.streamTo[streamToName]; ok {
+						p.streamToMu.Unlock()
+						log.Panic("Can't have two different pipeline streaming to single stream")
+					}
+					p.streamTo[streamToName] = prevNode
+					p.streamToMu.Unlock()
+				}
+
 			}
 		}
 
