@@ -13,6 +13,19 @@ var posMap = map[int]string {
 	3: "rd",
 }
 
+func parseJoinArgs(alias interface{})(string,error){
+	var name string
+	if alias != nil{
+		if nm,ok := cast.TryString(alias);ok{
+			name = nm
+		}else{
+			return name, errors.New("could not decode alias")
+		}
+	}
+
+	return name,nil
+}
+
 func parseAggArgs(alias interface{}, flt interface{}) (string, Filter, error) {
 	name := ""
 	filter := TrueFilter

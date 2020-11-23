@@ -1,4 +1,5 @@
 package newPeg
+
 //-------------------------------------------------------------------------------------------//
 //All related to source
 type SourceJob struct{
@@ -61,5 +62,20 @@ type InTo struct{
 	StreamTo string
 }
 
+//All structs related to join
 
+type JoinAttributes struct{
+	SelectFields 	[]string
+	JoinCondition 	  JoinConditions
+}
 
+type JoinConditions struct{
+	RightFields 	[]string
+	LeftFields  	[]string
+	JoinOperator	  string
+}
+
+type dummy struct{
+	fields string
+	condition string
+}

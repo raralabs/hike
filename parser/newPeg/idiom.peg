@@ -116,6 +116,65 @@ SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
 
 
 //Transform jobs
+JoinJobG <- "join" _ job:JoinJobs{
+    return TransformJob{Type:JOINJOB,OperateOn:job},nil
+}
+
+JoinJobs<- InnerJoinG
+
+InnerJoinG<- alias:EqAliasG _ "inner" _ "(" _ query:Query _ ")"{
+     name,err := parseJoinArgs(alias)
+     if err !=nil{
+         return nil,err
+         }
+     return JoinNodeJob{Alias:name,Type:"INNER",Attributes:query.(JoinAttributes)},nil
+}
+Query <- "select" _ field:Fields _ "on" _ condition:JoinCondition _{
+    return JoinAttributes{SelectFields:field.([]string),JoinCondition:condition.(JoinConditions)},nil
+}
+
+Fields <- AllFields/SelFields
+
+AllFields <- "*"{
+    var fields []string
+    fields = append(fields,"*")
+    return fields,nil
+}
+
+SelFields <- first:Word _  rest:("," _ Word _)*{
+    var fields []string
+    fields = append(fields,first.(string))
+    for _,val := range rest.([]interface{}){
+        castedVal := val.([]interface{})
+        fields = append(fields,castedVal[2].(string))
+    }
+    return fields,nil
+}
+JoinCondition <- left:JoinFactors _ op:FilterPriOp _ right:JoinFactors _ {
+        return JoinConditions{LeftFields:left.([]string),RightFields:right.([]string),JoinOperator:"=="},nil
+}
+
+
+JoinFactors <- first:Word _ rest:("," _ Word _)*{
+    var factors []string
+    factors = append(factors,first.(string))
+    for _,factor := range rest.([]interface{}){
+        castedVal := factor.([]interface{})
+        if len(castedVal) >=4{
+            factors = append(factors,castedVal[2].(string))
+        }
+    }
+return factors,nil
+}
+
+
+
+
+
+
+
+
+
 //All related to the aggregator transform
 AggJobG <- "agg" _ params:AggGroupBy? _ job:AggJobs rest:("," _ AggJobs)* {
         jobSlices := cast.ToIfaceSlice(rest)

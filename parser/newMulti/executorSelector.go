@@ -1,6 +1,7 @@
 package newMulti
 
 import (
+	canalTrns "github.com/raralabs/canal/ext/transforms"
 	"fmt"
 	"os"
 	"log"
@@ -15,7 +16,6 @@ import (
 	"github.com/raralabs/canal/ext/transforms/aggregates"
 	"github.com/raralabs/hike/parser/newPeg"
 	"github.com/raralabs/canal/ext/transforms/doFn"
-
 )
 
 
@@ -348,7 +348,21 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 			}
 		}
 	case newPeg.JOINJOB:
-		fmt.Println("go go")
+		stgContent := stg.OperateOn.(newPeg.JoinNodeJob)
+		attributes := stgContent.Attributes
+		selFields := attributes.SelectFields
+		condition := attributes.JoinCondition
+		leftFields := condition.LeftFields
+		rightFields := condition.RightFields
+		switch stgContent.Type{
+		case "INNER":
+			fmt.Println("goodgame",selFields,leftFields,rightFields)
+			exec,_ := canalTrns.NewJoinProcessor("inner",leftFields,rightFields,selFields,"","S1","S2")
+			//NewJoinProcessor(name string,fields1,fields2,selectFields []string,
+			//	joinType joinUsingHshMap.JoinType,firstTableName,secondTableName string)
+			//(*joinProcessor,error) {
+			exec.SetName("join")
+		}
 
 	}
 	return exec

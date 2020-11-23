@@ -2,7 +2,6 @@ package newPeg
 
 import (
 	"time"
-
 	"github.com/Knetic/govaluate"
 	"github.com/raralabs/canal/core/transforms/event/poll"
 )
@@ -30,6 +29,13 @@ type AggNodeJob struct {
 	Trigger   poll.Event
 	Functions []interface{}
 	GroupBy   []string
+}
+
+type JoinNodeJob struct{
+	Alias string
+	Type string
+	Attributes JoinAttributes
+
 }
 
 //type SinkJob struct {
