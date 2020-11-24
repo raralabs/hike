@@ -57,7 +57,6 @@ func getExecutor(stg interface{}) executorPod {
 	case newPeg.SinkJob:
 		currentStg := stg.(newPeg.SinkJob)
 		if currentStg.Type == newPeg.INTO{
-
 			operator := currentStg.OperateOn.(newPeg.InTo)
 			streamTo := operator.StreamTo
 			executor = executorPod{exec,false,streamTo,"SINK"}

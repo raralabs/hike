@@ -1,6 +1,7 @@
 package newMulti
 
 import (
+	"fmt"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/parser/at"
@@ -77,14 +78,14 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 	//traverse through the each stage of the statment src/transform*/sink and get
 	//the respective executor if its a primary stage else get the other information
 	//in the executor pod.
-	for i,stage := range cast.ToIfaceSlice(statement){
+	for i,stage := range cast.ToIfaceSlice(statement) {
 		exec := getExecutor(stage)
 		//file,fake,agg functions,stdout etc are primary stage
 		//while into,branch etc are not.For primary stages executor
 		//is needed. If executor is nil then panic.
-		if exec.PrimaryStage == true{
-			if exec.Executor == nil{
-				log.Panic("Executor of primary stage is nil",stage)
+		if exec.PrimaryStage == true {
+			if exec.Executor == nil {
+				log.Panic("Executor of primary stage is nil", stage)
 			}
 			//create a new node with the respective executor
 			newNode := &node{
@@ -95,56 +96,60 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 			//increment the id for next stage node
 			startId++
 
-			if exec.StageType == "SOURCE"{
+			if exec.StageType == "SOURCE" {
 				//if its a source and is at the first of the statement assign the node
 				//to the firstNode else raise error
-				if i==0{
+				if i == 0 {
 					firstNode = newNode
-				}else{
+				} else {
 					log.Panic("source should always be the begining of the pipeline")
 				}
 
-			}else if exec.StageType == "TRANSFORM"|| exec.StageType == "SINK"{
+			} else if exec.StageType == "TRANSFORM" || exec.StageType == "SINK" {
 				//if stage is transform and is the second stage of the statement and streamFromName exist
 				//add it to the streamFrom.
 				//streamFromName exist if the statement doesn't contain the
 				//primary stage source.
-				if i==1{
-					if streamFromName != ""{
+				if i == 1 {
+					if streamFromName != "" {
 						p.streamFromMu.Lock()
 						p.streamFrom[streamFromName] = append(p.streamFrom[streamFromName], newNode)
 						p.streamFromMu.Unlock()
-					} else if multiStream!=nil{
+					} else if multiStream != nil {
 						p.streamFromMu.Lock()
-						for _,secSource := range multiStream{
-							p.streamFrom[secSource]= append(p.streamFrom[secSource],newNode)
+						for _, secSource := range multiStream {
+							p.streamFrom[secSource] = append(p.streamFrom[secSource], newNode)
 						}
 						p.streamFromMu.Unlock()
 					}
 				}
 
-				if prevNode!=nil{
+				if prevNode != nil {
 					prevNode.toNodes = append(prevNode.toNodes, newNode)
 				}
 
 			}
 			prevNode = newNode
-		}else if exec.PrimaryStage ==false{
-			if exec.StageType == "SOURCE"{
-				_,ok := exec.StreamLabel.(string)
-					if ok{
-						streamFromName = exec.StreamLabel.(string)
-					}else{
-						multiStream = exec.StreamLabel.([]string)
-					}
+		} else if exec.PrimaryStage == false {
+			if exec.StageType == "SOURCE" {
+				_, ok := exec.StreamLabel.(string)
+				if ok {
+					streamFromName = exec.StreamLabel.(string)
+				} else {
+					multiStream = exec.StreamLabel.([]string)
 				}
 			}
-			if exec.StageType == "SINK"{
-				if prevNode != nil{
+
+			if exec.StageType == "SINK" {
+				fmt.Print("Erin", exec)
+				if prevNode != nil {
 					streamToName = exec.StreamLabel.(string)
+
 					p.streamToMu.Lock()
+
 					if _, ok := p.streamTo[streamToName]; ok {
 						p.streamToMu.Unlock()
+
 						log.Panic("Can't have two different pipeline streaming to single stream")
 					}
 					p.streamTo[streamToName] = prevNode
@@ -153,7 +158,7 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 
 			}
 		}
-
+	}
 	if firstNode==nil{
 		return nil,startId
 	}
