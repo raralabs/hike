@@ -35,6 +35,7 @@ type JoinNodeJob struct{
 	Alias string
 	Type string
 	Attributes JoinAttributes
+	JoinSubType string
 
 }
 

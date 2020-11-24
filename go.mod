@@ -12,6 +12,7 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-tty v0.0.3 // indirect
+	github.com/mna/pigeon v1.0.0 // indirect
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03 // indirect
 	github.com/raralabs/canal v0.0.0-20200903081923-7b6541c0d100

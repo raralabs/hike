@@ -1,8 +1,9 @@
 package newMulti
 
 import (
-	canalTrns "github.com/raralabs/canal/ext/transforms"
+
 	"fmt"
+	//"github.com/raralabs/canal/ext/transforms"
 	"os"
 	"log"
 	canalSnk "github.com/raralabs/canal/ext/sinks"
@@ -357,11 +358,12 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 		switch stgContent.Type{
 		case "INNER":
 			fmt.Println("goodgame",selFields,leftFields,rightFields)
-			exec,_ := canalTrns.NewJoinProcessor("inner",leftFields,rightFields,selFields,"","S1","S2")
+			//exec,_:=transforms.NewJoinProcessor()
+			//exec,_ := canalTrns.NewJoinProcessor("inner",leftFields,rightFields,selFields,"","S1","S2")
 			//NewJoinProcessor(name string,fields1,fields2,selectFields []string,
 			//	joinType joinUsingHshMap.JoinType,firstTableName,secondTableName string)
 			//(*joinProcessor,error) {
-			exec.SetName("join")
+			//exec.SetName("join")
 		}
 
 	}

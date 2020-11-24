@@ -18,7 +18,7 @@ func IsComment(statement string)bool{
 
 func main(){
 	cmd:=`fake(10) | filter(age>30) | agg alias = sum(age) | s1=into();
-		s1,s2 | join aliasing = inner(select * on age == age ) | stdout();;`
+		s1,s2 | join alias=rightouter( select * on age == age) | stdout();;`
 	//remove comments from command
 	//parsed,_ := newPeg.Parse("",[]byte(sql_query))
 	//fmt.Println("query",parsed)

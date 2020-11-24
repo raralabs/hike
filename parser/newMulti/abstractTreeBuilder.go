@@ -1,7 +1,6 @@
 package newMulti
 
 import (
-	"fmt"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/parser/at"
@@ -78,7 +77,6 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 	//traverse through the each stage of the statment src/transform*/sink and get
 	//the respective executor if its a primary stage else get the other information
 	//in the executor pod.
-	fmt.Println("Stream",streamToName)
 	for i,stage := range cast.ToIfaceSlice(statement){
 		exec := getExecutor(stage)
 		//file,fake,agg functions,stdout etc are primary stage

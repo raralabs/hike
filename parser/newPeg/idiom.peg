@@ -120,7 +120,7 @@ JoinJobG <- "join" _ job:JoinJobs{
     return TransformJob{Type:JOINJOB,OperateOn:job},nil
 }
 
-JoinJobs<- InnerJoinG
+JoinJobs<- InnerJoinG/OuterJoinG
 
 InnerJoinG<- alias:EqAliasG _ "inner" _ "(" _ query:Query _ ")"{
      name,err := parseJoinArgs(alias)
@@ -129,6 +129,32 @@ InnerJoinG<- alias:EqAliasG _ "inner" _ "(" _ query:Query _ ")"{
          }
      return JoinNodeJob{Alias:name,Type:"INNER",Attributes:query.(JoinAttributes)},nil
 }
+
+OuterJoinG <- LeftOuterG/RightOuterG/FullOuterG
+
+LeftOuterG <- alias:EqAliasG _ "leftouter" _ "(" _ query:Query _ ")"{
+                name,err := parseJoinArgs(alias)
+                if err !=nil{
+                   return nil,err
+                   }
+         return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"LEFTOUTER"},nil
+         }
+
+RightOuterG<- alias:EqAliasG _ "rightouter" _ "(" _ query:Query _ ")"{
+              name,err := parseJoinArgs(alias)
+              if err !=nil{
+                  return nil,err
+                  }
+              return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"RIGHTOUTER"},nil
+              }
+FullOuterG <- alias:EqAliasG _ "rightouter" _ "(" _ query:Query _ ")"{
+              name,err := parseJoinArgs(alias)
+              if err !=nil{
+                    return nil,err
+                 }
+              return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"RIGHTOUTER"},nil
+              }
+
 Query <- "select" _ field:Fields _ "on" _ condition:JoinCondition _{
     return JoinAttributes{SelectFields:field.([]string),JoinCondition:condition.(JoinConditions)},nil
 }
