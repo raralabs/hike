@@ -29,6 +29,8 @@ Command <- command:Statement rest:((_ Statement )* _ TOK_SEMICOLON ){
         		}
         	}
             return commands,nil
+    }/command:Statement rest:((_ Statement )* _  ){
+        return nil, errors.New("Missing ; at the end of Command")
     }
 
 
@@ -64,6 +66,10 @@ Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ stateme
         	}
 
         	return stages,nil
+    }/statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ ){
+        return nil,errors.New("In Statement: Missing ; at the end of statement")
+    }/statement:Source rest:((_ "|" _ statement:Transform)* _ TOK_SEMICOLON){
+        return nil,errors.New("statement should end with a sink")
     }
 
 
@@ -81,13 +87,17 @@ FileJobG <- _ "file(" _ filename:FileName _ ")" {
         return SourceJob{Type: FILEJOB,OperateOn:SrcFile{FileName:fname}},nil
     }
     return nil, errors.New("could not decode source file name")
+}/ _ "file()"{
+    return nil,errors.New("File Name Missing")
 }
 
-FakeJobG <- _ "fake(" _ numData:PositiveNumber _ ")" {
+FakeJobG <- _ "fake"_ "(" _ numData:PositiveNumber _ ")" {
     if n, ok := cast.TryInt(numData); ok {
        return SourceJob{Type:FAKEJOB,OperateOn:SrcFake{Number:n}},nil
     }
-    return nil, errors.New("could not decode source file name")
+    return nil, errors.New("could not decode number")
+}/_ "fake"_ "(" _ ")"{
+    return nil,errors.New("Mention the number of data to be generated")
 }
 
 BranchJobG <- "branch"_"(" _ br:IDENTIFIER ")"{
@@ -109,6 +119,8 @@ SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
     	}
 
     return SourceJob{Type:SECSOURCE,OperateOn:SrcSec{Sources:secSources}},nil
+}/src1:IDENTIFIER rest:(SecSource){
+    return nil,errors.New("comma expected to separate seconday sources")
 }
 
 //End Source Jobs
@@ -122,22 +134,26 @@ JoinJobG <- "join" _ job:JoinJobs{
 
 JoinJobs<- InnerJoinG/OuterJoinG
 
-InnerJoinG<- alias:EqAliasG _ "inner" _ "(" _ query:Query _ ")"{
+InnerJoinG<- alias:EqAliasG? _ "inner" _ "(" _ query:Query _ ")"{
      name,err := parseJoinArgs(alias)
      if err !=nil{
          return nil,err
          }
      return JoinNodeJob{Alias:name,Type:"INNER",Attributes:query.(JoinAttributes)},nil
+}/ alias:EqAliasG? _ "inner" _ "(" _ ")"{
+return nil,errors.New("Expected query after (")
 }
 
 OuterJoinG <- LeftOuterG/RightOuterG/FullOuterG
 
-LeftOuterG <- alias:EqAliasG _ "leftouter" _ "(" _ query:Query _ ")"{
+LeftOuterG <- alias:EqAliasG? _ "leftouter" _ "(" _ query:Query _ ")"{
                 name,err := parseJoinArgs(alias)
                 if err !=nil{
                    return nil,err
                    }
          return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"LEFTOUTER"},nil
+         }/alias:EqAliasG? _ "leftouter" _ "(" _ ")"{
+         return nil, errors.New("Expected query after (")
          }
 
 RightOuterG<- alias:EqAliasG _ "rightouter" _ "(" _ query:Query _ ")"{
@@ -146,17 +162,24 @@ RightOuterG<- alias:EqAliasG _ "rightouter" _ "(" _ query:Query _ ")"{
                   return nil,err
                   }
               return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"RIGHTOUTER"},nil
-              }
+              }/alias:EqAliasG? _ "rightouter" _ "(" _ ")"{
+                        return nil, errors.New("Expected query after (")
+                        }
 FullOuterG <- alias:EqAliasG _ "rightouter" _ "(" _ query:Query _ ")"{
               name,err := parseJoinArgs(alias)
               if err !=nil{
                     return nil,err
                  }
               return JoinNodeJob{Alias:name,Type:"OUTER",Attributes:query.(JoinAttributes),JoinSubType:"RIGHTOUTER"},nil
+              }/alias:EqAliasG? _ "fullouter" _ "(" _ ")"{
+                 return nil, errors.New("Expected query after (")
               }
+
 
 Query <- "select" _ field:Fields _ "on" _ condition:JoinCondition _{
     return JoinAttributes{SelectFields:field.([]string),JoinCondition:condition.(JoinConditions)},nil
+}/ "select" _ "on" _ condition:JoinCondition _ {
+    return nil, errors.New("select fields missing. use * for all fields")
 }
 
 Fields <- AllFields/SelFields
@@ -176,8 +199,15 @@ SelFields <- first:Word _  rest:("," _ Word _)*{
     }
     return fields,nil
 }
+
 JoinCondition <- left:JoinFactors _ op:FilterPriOp _ right:JoinFactors _ {
         return JoinConditions{LeftFields:left.([]string),RightFields:right.([]string),JoinOperator:"=="},nil
+}/ left:JoinFactors _ right:JoinFacotors _ {
+    return nil, errors.New("missing operator in between the join factors")
+}/left:JoinFactors _ op:FilterPriOp _ {
+    return nil, errors.New("missing right factors of the join condition")
+}/left:JoinFactors _ {
+    return nil, errors.New("missing operator and right factor in join condition")
 }
 
 
@@ -192,11 +222,6 @@ JoinFactors <- first:Word _ rest:("," _ Word _)*{
     }
 return factors,nil
 }
-
-
-
-
-
 
 
 
@@ -693,6 +718,8 @@ StdOutG <- "stdout(" _ params:(VarParamListG)? _ ")" {
         Type: STDOUT,
         OperateOn:StdOut{Header:nil},
     }, nil
+}/"stdout"{
+    return nil,errors.New("missing () after stdout")
 }
 
 SinkInto <-first:Variable rest:(_ "=" _ "into()"){
@@ -701,14 +728,26 @@ SinkInto <-first:Variable rest:(_ "=" _ "into()"){
         Type: INTO,
         OperateOn:InTo{StreamTo:streamTo},
         },nil
+    }/"into" _ "(" _ Variable _ ")"{
+    return nil, errors.New("improper syntax, proper syntax is Variable = into();")
+    }/"into" _ "(" _ ")"{
+    return nil, errors.New("improper syntax, secondary sink name not given; syntax is sink name of variable type = into() ;")
+    }/"into" _ {
+    return nil,errors.New("improper syntax,proper syntax is Variable = into();")
+    }/first:Variable rest:( _ "=" _ "into"){
+    return nil,errors.New("missing () after into")
     }
 
 BlackHoleG <- "blackhole(" _ params:(VarParamListG)? _ ")" {
         return SinkJob{Type: BLACKHOLE}, nil
+}/"blackhole" _{
+    return nil,errors.New("improper syntax,proper syntax is blackhole();")
 }
 
 PlotG <- "plot" _ widget:(BarWidget) {
     return SinkJob{Type: PLOT, OperateOn:Plot{Type:"plot",Widget: widget}}, nil
+}/"plot" _ {
+ return nil,errors.New("widget missing in plot")
 }
 
 BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable _ args:("," _ Number _ ("," _ Number)?)? _ ")" {
@@ -746,7 +785,6 @@ BarWidget <- alias:EqAliasG? _ "bar(" _ xField:Variable _ "," _ yField:Variable 
 
 FileName <- Variable ("." ext:Variable)* {
     nm, _ := cast.TryString(string(c.text))
-
     return nm, nil
 }
 // Math Grammar

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/raralabs/hike/parser/newMulti"
 	"github.com/raralabs/hike/parser/newPeg"
 	"github.com/raralabs/hike/utils/LanguageProcessor"
-	"github.com/raralabs/hike/parser/newMulti"
 	"time"
 )
 
@@ -17,10 +17,13 @@ func IsComment(statement string)bool{
 	return false
 }
 
+
+
 func main(){
-	cmd:=`fake(10) | filter(age>30) | s1=into();
-		branch(s1) | filter(age>40) | stdout();  
-		branch(s1) | agg counter = count() | stdout();;`
+	cmd:=`fake(100) | filter(age>30) | agg counter = count() | s1 = into();
+		  fake(200) | filter(age>30) | s2 = into();
+          # this is a comment
+          s1,s2    | join alias=inner(select * on age == age) | stdout();;`
 	//remove comments from command
 	//parsed,_ := newPeg.Parse("",[]byte(sql_query))
 	//fmt.Println("query",parsed)
@@ -28,7 +31,10 @@ func main(){
 	cleanedCommand := qryPreprocessor.PrepareQuery(IsComment)
 
 	fmt.Println("cleaned",cleanedCommand)
-	stg,_ := newPeg.Parse("", []byte(cleanedCommand))
+	stg,err := newPeg.Parse("", []byte(cleanedCommand))
+	if err!= nil{
+		panic(err)
+	}
 	fmt.Println("Stage",stg)
 	//
 	builder := newMulti.NewATBuilder()

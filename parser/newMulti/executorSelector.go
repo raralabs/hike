@@ -3,6 +3,9 @@ package newMulti
 import (
 
 	"fmt"
+	"github.com/raralabs/canal/ext/transforms"
+	"github.com/raralabs/canal/ext/transforms/joinUsingHshMap"
+
 	//"github.com/raralabs/canal/ext/transforms"
 	"os"
 	"log"
@@ -356,13 +359,11 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 		rightFields := condition.RightFields
 		switch stgContent.Type{
 		case "INNER":
-			fmt.Println("goodgame",selFields,leftFields,rightFields)
-			//exec,_:=transforms.NewJoinProcessor()
-			//exec,_ := canalTrns.NewJoinProcessor("inner",leftFields,rightFields,selFields,"","S1","S2")
-			//NewJoinProcessor(name string,fields1,fields2,selectFields []string,
-			//	joinType joinUsingHshMap.JoinType,firstTableName,secondTableName string)
-			//(*joinProcessor,error) {
-			//exec.SetName("join")
+			exec,_ =transforms.NewJoinProcessor("",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"S1","S2")
+			exec.SetName("join")
+
+		case "LEFTOUTER":
+			fmt.Println("other joins disabled for now")
 		}
 
 	}

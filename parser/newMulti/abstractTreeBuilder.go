@@ -1,7 +1,6 @@
 package newMulti
 
 import (
-	"fmt"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/utils/cast"
 	"github.com/raralabs/hike/parser/at"
@@ -141,7 +140,6 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 			}
 
 			if exec.StageType == "SINK" {
-				fmt.Print("Erin", exec)
 				if prevNode != nil {
 					streamToName = exec.StreamLabel.(string)
 
