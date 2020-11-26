@@ -42,12 +42,12 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64, header ...string) *PrettyPrin
 	return pp
 }
 
-func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
+func (cw *PrettyPrint) Execute(m pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
 
 	//fmt.Println(m.Content(), m.PrevContent())
 
 	if cw.firstRecord {
-		cntnt := m.Content()
+		cntnt := m.Msg.Content()
 		if cntnt != nil {
 			var groups []string
 			if cw.header == nil || len(cw.header) == 0 {
@@ -120,8 +120,8 @@ func (cw *PrettyPrint) Execute(m message.Msg, proc pipeline.IProcessorForExecuto
 	}
 
 	if !cw.firstRecord {
-		cw.batch.AggFunc(m, &struct{}{})
-		cw.done(m, proc)
+		cw.batch.AggFunc(m.Msg, &struct{}{})
+		cw.done(m.Msg, proc)
 	}
 
 	return false

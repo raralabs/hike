@@ -337,7 +337,15 @@ steps:
                 map Enrich function
             - usecase:
                 - s1| map twice_age = 2*age |stdout();                               
-            
+   
+    Join Funtions
+        join
+            - joins the two streams of the data
+            - syntax 
+                Inner Join :join alias = inner(query)
+                Left Outer Join : join alias = leftouter(query)
+                Right Outer JOin : join alias = rightouter(query)
+                        
 ##### Sink Functions
     (currently supported)
     Stdout

@@ -37,16 +37,16 @@ func NewCsvReader(r io.Reader, maxRows int) *CsvReader {
 	}
 }
 
-func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
+func (cr *CsvReader) Execute(m pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
 
 	if cr.currRow == cr.maxRows {
-		cr.done(m, proc)
+		cr.done(m.Msg, proc)
 		return false
 	}
 
 	record, err := cr.reader.Read()
 	if err == io.EOF {
-		cr.done(m, proc)
+		cr.done(m.Msg, proc)
 		return false
 	} else if err != nil {
 		log.Panic(err)
@@ -61,7 +61,7 @@ func (cr *CsvReader) Execute(m message.Msg, proc pipeline.IProcessorForExecutor)
 		value, valType := extract.ValType(record[i])
 		contents.Add(v, content.NewFieldValue(value, valType))
 	}
-	proc.Result(m, contents, nil)
+	proc.Result(m.Msg, contents, nil)
 	cr.currRow++
 
 	return false
