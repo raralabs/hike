@@ -20,7 +20,7 @@ func IsComment(statement string)bool{
 
 
 func main(){
-	cmd:=`fake(100) | filter(age>30) | sort() by age | s1 = into();
+	cmd:=`fake(100) | filter(age>30) | s1 = into();
 		  fake(200) | filter(age>30) | s2 = into();
           # this is a comment
           s1,s2     | stdout();;`

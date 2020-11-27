@@ -359,11 +359,14 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 		rightFields := condition.RightFields
 		switch stgContent.Type{
 		case "INNER":
-			exec,_ =transforms.NewJoinProcessor("",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"S1","S2")
-			exec.SetName("join")
-
+			exec,_=transforms.NewJoinProcessor("innerjoin",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec.SetName("innerjoin")
 		case "LEFTOUTER":
-			fmt.Println("other joins disabled for now")
+			exec,_=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec.SetName("leftouterjoin")
+		case "RIGHTOUTER":
+			exec,_=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec.SetName("rightouterjoin")
 		}
 
 	}

@@ -40,9 +40,14 @@ func (n *node) ToNodes() []at.Node {
 
 type tree struct {
 	sources []at.Node
+	multiNode map[at.Node]int32
 }
 
 func (t *tree) Sources() []at.Node {
 	return t.sources
+}
+
+func (t *tree)MultiNode() map[at.Node]int32{
+	return t.multiNode
 }
 

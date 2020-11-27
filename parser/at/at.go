@@ -2,7 +2,9 @@
 // parser to build the network.
 package at
 
-import "github.com/raralabs/canal/core/pipeline"
+import (
+	"github.com/raralabs/canal/core/pipeline"
+)
 
 // Node represents a single stage in the pipeline
 type Node interface {
@@ -27,4 +29,5 @@ type Node interface {
 // AT can be traversed recursively,
 type AT interface {
 	Sources() []Node
+	MultiNode() map[Node]int32
 }

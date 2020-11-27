@@ -21,6 +21,7 @@ type atBuilder struct {
 	streamFromMu, streamToMu *sync.Mutex// locks to avoid the race conditions
 	streamFrom               map[string][]at.Node //keeps records of where the SECSOURCE will pass the msg
 	streamTo                 map[string]*node //keeps records of where INTO sinks will pass the msg
+	MultiNodeTracker 	     map[at.Node]int32 //keeps records node that get stream from multiple stage
 
 }
 
@@ -31,6 +32,7 @@ func NewATBuilder() *atBuilder {
 		streamToMu:   &sync.Mutex{},
 		streamFrom:   make(map[string][]at.Node),
 		streamTo:     make(map[string]*node),
+		MultiNodeTracker : make(map[at.Node]int32),
 	}
 }
 
@@ -59,7 +61,7 @@ func (p *atBuilder) BuildAT(cmds []interface{}) at.AT{
 		}
 	}
 
-	absTree := &tree{sources: srcs}
+	absTree := &tree{sources: srcs,multiNode: p.MultiNodeTracker}
 	return absTree
 
 
@@ -93,6 +95,7 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 				added: true,
 			}
 			//increment the id for next stage node
+
 			startId++
 
 			if exec.StageType == "SOURCE" {
@@ -118,6 +121,12 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 						p.streamFromMu.Lock()
 						for _, secSource := range multiStream {
 							p.streamFrom[secSource] = append(p.streamFrom[secSource], newNode)
+							 _,ok := p.MultiNodeTracker[newNode]
+							 if ok{
+							 	p.MultiNodeTracker[newNode]+=int32(1)
+							 }else{
+							 	p.MultiNodeTracker[newNode] = int32(1)
+							 }
 						}
 						p.streamFromMu.Unlock()
 					}
@@ -147,7 +156,6 @@ func (p *atBuilder) buildSinglePipeline(startId int64,statement []interface{})(a
 
 					if _, ok := p.streamTo[streamToName]; ok {
 						p.streamToMu.Unlock()
-
 						log.Panic("Can't have two different pipeline streaming to single stream")
 					}
 					p.streamTo[streamToName] = prevNode
