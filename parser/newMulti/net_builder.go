@@ -18,7 +18,7 @@ type netBuilder struct {
 	processorTable map[at.Node][]pipeline.IProcessor
 }
 
-func NewNetBuilder() *netBuilder {
+func newNetBuilder() *netBuilder {
 	return &netBuilder{nodeCounter: make(map[at.Node]int32),processorTable: make(map[at.Node][]pipeline.IProcessor )}
 }
 

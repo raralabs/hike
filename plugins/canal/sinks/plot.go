@@ -6,7 +6,6 @@ import (
 
 	"github.com/raralabs/hike/plugins/asciigraph/plot"
 
-	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/canal/utils/cast"
 )
@@ -33,8 +32,8 @@ func NewBarPlot(title, xField, yField string, width, gap int) *BarPlot {
 	}
 }
 
-func (cw *BarPlot) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
-
+func (cw *BarPlot) Execute(msgPod pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
+	m := msgPod.Msg
 	content := m.Content()
 
 	// Check for eof

@@ -26,7 +26,7 @@ type atBuilder struct {
 }
 
 //function that initializes the abstract tree builder
-func NewATBuilder() *atBuilder {
+func newATBuilder() *atBuilder {
 	return &atBuilder{
 		streamFromMu: &sync.Mutex{},
 		streamToMu:   &sync.Mutex{},

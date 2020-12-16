@@ -45,9 +45,9 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64, header ...string) *PrettyPrin
 func (cw *PrettyPrint) Execute(m pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
 
 	//fmt.Println(m.Content(), m.PrevContent())
-
 	if cw.firstRecord {
 		cntnt := m.Msg.Content()
+
 		if cntnt != nil {
 			var groups []string
 			if cw.header == nil || len(cw.header) == 0 {
@@ -57,11 +57,11 @@ func (cw *PrettyPrint) Execute(m pipeline.MsgPod, proc pipeline.IProcessorForExe
 			}
 
 			after := func(m message.Msg, proc pipeline.IProcessorForExecutor, contents, prevContents []content.IContent) {
-
 				if cntnt := m.Content(); cntnt != nil {
 					if eof, ok := cntnt.Get("eof"); ok {
 						if eof.Val == true {
 							// Write header
+
 							row := make([]interface{}, len(groups))
 							for i, g := range groups {
 								row[i] = g

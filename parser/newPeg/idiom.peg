@@ -74,11 +74,11 @@ Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ stateme
 
 
 
-Source <- BranchJobG/FileJobG/FakeJobG/SecSource
+Source <- BranchJobG/FileJobG/FakeJobG/SecSource/LiftBridgeReaderG
 
 Transform <- AggJobG/DoJobG/JoinJobG
 
-Sink <- StdOutG/SinkInto/PlotG
+Sink <- StdOutG/SinkInto/PlotG/LiftBridgeWriterG
 
 //Source Jobs
 
@@ -123,6 +123,9 @@ SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
     return nil,errors.New("comma expected to separate seconday sources")
 }
 
+LiftBridgeReaderG <- "liftReader" _ "(" ")"{
+return "liftReader"
+}
 //End Source Jobs
 
 

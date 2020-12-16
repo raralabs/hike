@@ -5434,7 +5434,6 @@ func (p *parser) callonAggJobG1() (interface{}, error) {
 }
 
 func (c *current) onCountAgg1(alias, args interface{}) (interface{}, error) {
-
     name,filter,err := parseAggArgs(alias,args)
     if err !=nil{
     return nil,err

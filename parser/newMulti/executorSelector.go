@@ -108,6 +108,7 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 					}
 
 					match, err := ag.Filter(m)
+					fmt.Println("match",match,m)
 					if err != nil {
 						log.Panic(err)
 					}

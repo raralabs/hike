@@ -3,7 +3,6 @@ package sinks
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/raralabs/canal/core/message"
 	"github.com/raralabs/canal/core/pipeline"
 	"io"
 	"strconv"
@@ -26,8 +25,8 @@ func NewCsvWriter(w io.Writer, header ...string) *CsvWriter {
 	}
 }
 
-func (cw *CsvWriter) Execute(m message.Msg, proc pipeline.IProcessorForExecutor) bool {
-
+func (cw *CsvWriter) Execute(msgPod pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
+	m := msgPod.Msg
 	contents := m.Content()
 
 	// Check for eof

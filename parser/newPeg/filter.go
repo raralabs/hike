@@ -3,7 +3,6 @@ package newPeg
 import (
 	"errors"
 	"fmt"
-
 	"github.com/Knetic/govaluate"
 	"github.com/raralabs/canal/utils/cast"
 )

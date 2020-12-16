@@ -15,8 +15,9 @@
         created the pipeline using hike parser - errors observed
               
     Reason of error:
-        Improper creation of pipeline in hike parser net_builder.go
+        Bug exists in pretty.go when stdout recieves data
+        from multiple stage.
+     
         
-    solution:
-        old code for pipeline creation should be changed.
+
                   

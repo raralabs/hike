@@ -45,5 +45,5 @@ func main() {
 			log.Panic(err)
 		}
 		return t
-	}, cliner.Liner, "single")
+	}, cliner.Liner, "newMulti")
 }
