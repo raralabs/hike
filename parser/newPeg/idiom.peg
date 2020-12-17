@@ -74,11 +74,11 @@ Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ stateme
 
 
 
-Source <- BranchJobG/FileJobG/FakeJobG/SecSource/LiftBridgeReaderG
+Source <- BranchJobG/FileJobG/FakeJobG/SecSource
 
-Transform <- AggJobG/DoJobG/JoinJobG
+Transform <- AggJobG/DoJobG/JoinJobG/MapJobG
 
-Sink <- StdOutG/SinkInto/PlotG/LiftBridgeWriterG
+Sink <- StdOutG/SinkInto/PlotG
 
 //Source Jobs
 
@@ -123,9 +123,7 @@ SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
     return nil,errors.New("comma expected to separate seconday sources")
 }
 
-LiftBridgeReaderG <- "liftReader" _ "(" ")"{
-return "liftReader"
-}
+
 //End Source Jobs
 
 
@@ -226,7 +224,23 @@ JoinFactors <- first:Word _ rest:("," _ Word _)*{
 return factors,nil
 }
 
+//all related to the map job
+MapJobG <- "map" _ job:(EnrichDo){
+    return TransformJob{Type:DOJOB, OperateOn:DoNodeJob{Function: job}}, nil
+}
 
+// Enrich Grammar
+EnrichDo <- fld:Variable _ "=" _ expr:MExpr {
+    field, _ := cast.TryString(fld)
+    ex, _ := cast.TryString(expr)
+
+    expression, err := govaluate.NewEvaluableExpression(ex)
+    if err != nil {
+        panic(err)
+    }
+
+    return Enrich{Field: field, Expr: expression}, nil
+}
 
 
 //All related to the aggregator transform

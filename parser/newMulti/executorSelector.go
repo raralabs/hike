@@ -303,6 +303,7 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 		exec = aggregator.Function()
 		exec.SetName("agg")
 
+
 	case newPeg.DOJOB:
 		stgContent := stg.OperateOn.(newPeg.DoNodeJob)
 		doneFunc := func(m message.Msg) bool {

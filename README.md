@@ -1,6 +1,33 @@
 # Hike
 
 A CLI for data exploration and visualization
+###Installation and use
+  #### issues that may arise
+  1.
+
+
+    have Execute(message.Msg, pipeline.IProcessorForExecutor) bool
+    want Execute(pipeline.MsgPod, pipeline.IProcessorForExecutor) bool
+      
+    solution
+    upgrade canalgo get -u github.com/raralabs/canal.git
+  
+ 2. during package upgrade:
+      
+
+    status 124 error ; terminal prompts disabled
+    
+    solution
+    go env -w GOPRIVATE=github.com/raralabs/canal.git
+      
+  
+### USE
+-simply run the main.go file inside examples/hike or run
+go build inside examples/hike
+
+- further user manual is documented on demo.md inside the 
+same folder.
+  
 ### CHANGES ON IDIOM.PEG RULES
 
 ---
