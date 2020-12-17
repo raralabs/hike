@@ -48,13 +48,14 @@ var (
 
 		"end",
 	}
-
+	//select the type of parser according to the mode
 	parsers = map[string]parser.IParser {
 		"single": single.NewParser(),
 		"multi": multi.NewParser(),
 		"newMulti":newMulti.NewParser(),
 	}
 
+	//select handler according to the mode to handle the command of user.
 	handlers = map[string]func(func(string) string, func(string), parser.IParser) {
 		"single": cli.SingleCommandMode,
 		"multi": cli.MultiCommandMode,
