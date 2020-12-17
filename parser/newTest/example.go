@@ -20,10 +20,8 @@ func IsComment(statement string)bool{
 
 
 func main(){
-	cmd:=`fake(100) | agg counter=count(age==30) | s1 = into();
-		  fake(200) | filter(age>30) | s2 = into();
-          # this is a comment
-          s1,s2     | join inner(select * on age==age) | stdout();;`
+	cmd:=`fake(100) |agg counter=count(age>20) | stdout();;`
+
 	//remove comments from command
 	//parsed,_ := newPeg.Parse("",[]byte(sql_query))
 	//fmt.Println("query",parsed)
@@ -38,7 +36,7 @@ func main(){
 	fmt.Println("Stage",stg)
 	//
 	builder := newMulti.NewATBuilder()
-	absTree := builder.BuildAT(stg.([]interface{}))
+	absTree := builder.Build(stg.([]interface{}))
 	fmt.Println(absTree)
 	nb := newMulti.NewNetBuilder()
 	//

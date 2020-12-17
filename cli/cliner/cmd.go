@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/raralabs/hike/parser"
 	"github.com/raralabs/hike/parser/multi"
+	"github.com/raralabs/hike/parser/newMulti"
 	"github.com/raralabs/hike/parser/single"
 	"log"
 	"os"
@@ -51,11 +52,13 @@ var (
 	parsers = map[string]parser.IParser {
 		"single": single.NewParser(),
 		"multi": multi.NewParser(),
+		"newMulti":newMulti.NewParser(),
 	}
 
 	handlers = map[string]func(func(string) string, func(string), parser.IParser) {
 		"single": cli.SingleCommandMode,
 		"multi": cli.MultiCommandMode,
+		"newMulti":cli.NewMultiCommandMode,
 	}
 )
 

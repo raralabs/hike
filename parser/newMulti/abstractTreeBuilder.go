@@ -26,7 +26,7 @@ type atBuilder struct {
 }
 
 //function that initializes the abstract tree builder
-func newATBuilder() *atBuilder {
+func NewATBuilder() *atBuilder {
 	return &atBuilder{
 		streamFromMu: &sync.Mutex{},
 		streamToMu:   &sync.Mutex{},
@@ -39,7 +39,7 @@ func newATBuilder() *atBuilder {
 //takes the array of statements of commands parsed by the peg and constructs the abstract tree.
 //abstract tree contains the node . the node contains toNodes which keeps track of the successive
 //nodes to which it provides message to. (Similar to linked list)
-func (p *atBuilder) BuildAT(cmds []interface{}) at.AT{
+func (p *atBuilder) Build(cmds []interface{}) at.AT{
 	startId := int64(1)
 	var srcs []at.Node
 	for _,statement := range cmds{

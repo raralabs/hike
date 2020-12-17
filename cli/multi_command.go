@@ -3,22 +3,97 @@ package cli
 import (
 	"context"
 	"fmt"
+	"github.com/raralabs/hike/parser"
+	"log"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/raralabs/hike/parser"
 )
+
+const tok_semicolon = ';'
+
+func checkEndOfCommand(statement string)bool {
+	var nextToken uint8
+	i := len(statement)
+	last_char := statement[i-1]
+	if last_char == tok_semicolon {
+		for {
+			i--
+			if i >=1 {
+				nextToken = statement[i-1]
+			}else{
+				log.Panic("invalid input in statement",statement)
+			}
+			if nextToken == tok_semicolon {
+				return true
+			} else if nextToken == ' ' {
+				continue
+			} else {
+				return false
+			}
+		}
+	}
+	return false
+}
+func NewMultiCommandMode(cmdFunc func(string)string,addHistory func(string),prsr parser.IParser){
+	pipelineId := uint32(1)
+	statementCount:= 1
+	var command []string
+	promptText := "statement " + strconv.Itoa(statementCount) + ">>"
+	for {
+		var done bool
+		cmd := cmdFunc(promptText)
+		str := strings.TrimSpace(cmd)
+		if str == "end" {
+			break
+		}
+		eoc := checkEndOfCommand(str)
+		if eoc == true{
+			command = append(command,str)
+			statementCount=1
+			done = true
+		}else{
+			statementCount+=1
+			command = append(command,str)
+			promptText = "statement " + strconv.Itoa(statementCount) + ">>"
+		}
+		if done {
+
+			// Build the command
+			starter, ppln, closer := prsr.Build(pipelineId, command...)
+
+			// Create context to run the pipeline
+			c, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
+
+			// Run the starter to initialize all stages of a pipeline
+			starter()
+
+			start := time.Now()
+
+			// Run the pipeline
+			ppln.Start(c, cancel)
+
+			fmt.Printf("[TIME] To run the command: %v\n", time.Since(start))
+
+			// Close everything
+			closer()
+
+			// Reset the commands
+			command = nil
+		}
+	}
+
+	}
 
 func MultiCommandMode(cmdFunc func(string) string, addHistory func(string), prsr parser.IParser) {
 	pipelineId := uint32(1)
 
-	promptText := "Cmd>> "
+	promptText := "Cmd>>"
 	var commands []string
 
 	for {
 		cmd := cmdFunc(promptText)
 		str := strings.TrimSpace(cmd)
-
 		if str == "end" {
 			break
 		}

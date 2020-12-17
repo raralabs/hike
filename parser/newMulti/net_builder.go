@@ -1,7 +1,6 @@
 package newMulti
 
 import (
-	"fmt"
 	"github.com/raralabs/canal/core/pipeline"
 	"github.com/raralabs/hike/parser/at"
 	"strconv"
@@ -11,14 +10,12 @@ var (
 	opts = pipeline.DefaultProcessorOptions
 )
 
-
-
 type netBuilder struct {
-	nodeCounter map[at.Node]int32//keeps record of the nodes and its occurrence in the command
+	nodeCounter map[at.Node]int32//keeps record of the number of subscription by any node.
 	processorTable map[at.Node][]pipeline.IProcessor
 }
 
-func newNetBuilder() *netBuilder {
+func NewNetBuilder() *netBuilder {
 	return &netBuilder{nodeCounter: make(map[at.Node]int32),processorTable: make(map[at.Node][]pipeline.IProcessor )}
 }
 
@@ -47,41 +44,48 @@ func (nb *netBuilder) Build(id uint32, tree at.AT) *pipeline.Pipeline {
 func (nb *netBuilder) buildSubTree(node at.Node, p *pipeline.Pipeline, proc pipeline.IProcessor) {
 
 	exec := node.Executor()
-
-
-
 	//parse join node in a different way
 	// Parse the current node and build it's child
-	 _,ok := nb.nodeCounter[node]
-
+	 counter,ok := nb.nodeCounter[node]
 	 if ok {
-		 if nb.nodeCounter[node] != 1 {
-
-			 nb.nodeCounter[node] -= 1
+	 	if counter >1{
+		 	 nb.nodeCounter[node] -= 1
 			 nb.processorTable[node] = append(nb.processorTable[node], proc)
-		 } else {
+		 }else {
 		 	 nb.nodeCounter[node] = 0
 		 	 if exec.ExecutorType() == pipeline.SINK{
-		 	 	 snk := p.AddSink(exec.Name())
+				 snk := p.AddSink(exec.Name())
+		 	 	if nb.processorTable[node]!=nil{
 		 	 	 snk.AddProcessor(opts,exec,"path1","path2")
 				 nb.processorTable[node] = append(nb.processorTable[node],proc)
 				 for idx, pcr := range nb.processorTable[node]{
 					 route := "path" + strconv.Itoa(idx+1)
-					 fmt.Println("get",route)
 					 snk.ReceiveFrom(pipeline.MsgRouteParam(route),pcr)
 				 }
+		 	 	}else{
+		 	 		snk.AddProcessor(opts,exec,"path1")
+		 	 		snk.ReceiveFrom("path1",proc)
+				}
 				 return
 
 			 }else if exec.ExecutorType() == pipeline.TRANSFORM{
 				 transform := p.AddTransform(exec.Name())
-				 pr := transform.AddProcessor(opts, exec, "path1", "path2")
-				 nb.processorTable[node] = append(nb.processorTable[node],proc)
-				 for idx, pcr := range nb.processorTable[node]{
-					 route := "path" + strconv.Itoa(idx+1)
-					 transform.ReceiveFrom(pipeline.MsgRouteParam(route),pcr)
-				 }
-				 for _, n := range node.ToNodes() {
-					 nb.buildSubTree(n, p, pr)
+				 if nb.processorTable[node]!=nil{
+				 	pr := transform.AddProcessor(opts, exec, "path1", "path2")
+				 	nb.processorTable[node] = append(nb.processorTable[node],proc)
+				 	for idx, pcr := range nb.processorTable[node]{
+					 	route := "path" + strconv.Itoa(idx+1)
+					 	transform.ReceiveFrom(pipeline.MsgRouteParam(route),pcr)
+				 	}
+				 	for _, n := range node.ToNodes() {
+					 	nb.buildSubTree(n, p, pr)
+				 	}
+				 }else{
+					 pr:= transform.AddProcessor(opts,exec,"path1")
+					 transform.ReceiveFrom("path1",proc)
+					 for _, n := range node.ToNodes() {
+						 nb.buildSubTree(n, p, pr)
+					 }
 				 }
 
 			 }
@@ -104,8 +108,9 @@ func (nb *netBuilder) buildSubTree(node at.Node, p *pipeline.Pipeline, proc pipe
 		 	}
 
 			 transform := p.AddTransform(exec.Name())
-			 pr := transform.AddProcessor(opts, exec, "path")
-			 transform.ReceiveFrom("path", proc)
+
+			 pr := transform.AddProcessor(opts, exec, "path1")
+			 transform.ReceiveFrom("path1", proc)
 			 for _, n := range node.ToNodes() {
 				 nb.buildSubTree(n, p, pr)
 			 }
