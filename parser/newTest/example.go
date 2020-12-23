@@ -20,7 +20,9 @@ func IsComment(statement string)bool{
 
 
 func main(){
-	cmd:=`fake(100) | select(age) | stdout();;`
+	cmd:=`liftreader(0.0.0.0:8000,subodh-stream,subodh.shakya)  | s1 = into();
+			s1 | select(age) | agg counter=count(age>10) | s2 = into();
+			s2 | stdout();;`
 	//remove comments from command
 	//parsed,_ := newPeg.Parse("",[]byte(sql_query))
 	//fmt.Println("query",parsed)

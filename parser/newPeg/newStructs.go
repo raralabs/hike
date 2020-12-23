@@ -12,12 +12,19 @@ type SrcFile struct{
 }
 //source fake creator type
 type SrcFake struct{
-	Number int64
+	Number 			int64
 }
 
+//lift-bridge reader type
+type LiftReader struct{
+	Ip 				string
+	StreamName 		string
+	StreamSubject 	string
+
+}
 //secondary sources
 type SrcSec struct{
-	Sources []string
+	Sources 		[]string
 }
 
 //source branch type

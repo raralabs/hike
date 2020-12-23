@@ -2,79 +2,34 @@
 package newPeg
 }
 
-Command <- command:Statement rest:((_ Statement )* _ TOK_SEMICOLON ){
-        commands := []interface{}{(command.([]interface{}))}
-        for _,val := range(cast.ToIfaceSlice(rest)){
-        		_,ok := val.([]interface{})
-        		if ok{
-        			newVal := val.([]interface{})
-        			if len(newVal)>0{
-        				for _,item := range(newVal){
-        					_,ok := item.([]interface{})
-        					if ok{
-        						for _,subItem := range cast.ToIfaceSlice(item){
-        							_,ok := subItem.([]interface{})
-        							if ok{
-        								castedSubItem := cast.ToIfaceSlice(subItem)
-        								if len(castedSubItem)>0{
-        										commands = append(commands,castedSubItem)
-
-    									}
-    								}
-    							}
-    						}
-    					}
-
-        			}
-        		}
-        	}
-            return commands,nil
-    }/command:Statement rest:((_ Statement )* _  ){
-        return nil, errors.New("Missing ; at the end of Command")
+//commands consists of statements followed by semicolon as per ebnf cmd<- statement {statement}* ;
+Command <- first:Statement second:(_ Statement )* last: (_ TOK_SEMICOLON ){
+    commands := []interface{}{(first.([]interface{}))}
+    for _,val := range(cast.ToIfaceSlice(second)){
+        for _,statement := range cast.ToIfaceSlice(val){
+            castedStatement := cast.ToIfaceSlice(statement)
+            if len(castedStatement)>0{
+                commands = append(commands,castedStatement)
+            }
+        }
     }
+    return commands,nil
+}
+
+Statement <- source:Source transform:(_ "|" _ Transform)* sink:(_ "|" _ Sink) last:( _ TOK_SEMICOLON _ ){
+     stages := []interface{}{source}
+     transformStages := cast.ToIfaceSlice(transform)
+     for _,transformStage := range transformStages{
+        castedTransformStage := cast.ToIfaceSlice(transformStage)
+        stages = append(stages,castedTransformStage[3])
+     }
+     castedSinkStage := cast.ToIfaceSlice(sink)
+     stages = append(stages,castedSinkStage[3])
+     return stages,nil
+}
 
 
-
-Statement <- statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ TOK_SEMICOLON _){
-    stages := []interface{}{statement}
-        	rst := cast.ToIfaceSlice(rest)
-
-        	for _,val := range(rst){
-
-        		_,ok := val.([]interface{})
-        		if ok {
-        			newVal := cast.ToIfaceSlice(val)
-        			for _,item := range newVal{
-    					_, success := item.([]interface{})
-    					if success{
-    						newItem := cast.ToIfaceSlice(item)
-
-    						if len(newItem) == 4 {
-    							stages = append(stages, newItem[3])
-    						}
-    					}
-    				}
-        		}else{
-        			_,ok:= val.([]uint8)
-        			if !ok{
-        				stages = append(stages,val)
-
-        			}
-
-        		}
-
-        	}
-
-        	return stages,nil
-    }/statement:Source rest:((_ "|" _ statement:Transform)* _"|"_ statement:Sink _ ){
-        return nil,errors.New("In Statement: Missing ; at the end of statement")
-    }/statement:Source rest:((_ "|" _ statement:Transform)* _ TOK_SEMICOLON){
-        return nil,errors.New("statement should end with a sink")
-    }
-
-
-
-Source <- BranchJobG/FileJobG/FakeJobG/SecSource
+Source <- BranchJobG/FileJobG/FakeJobG/LiftBridgeReaderG/SecSource
 
 Transform <- AggJobG/DoJobG/JoinJobG/MapJobG
 
@@ -121,6 +76,15 @@ SecSource <- src1:IDENTIFIER rest:(_ ","_ src2:IDENTIFIER)?{
     return SourceJob{Type:SECSOURCE,OperateOn:SrcSec{Sources:secSources}},nil
 }/src1:IDENTIFIER rest:(SecSource){
     return nil,errors.New("comma expected to separate seconday sources")
+}
+
+LiftBridgeReaderG <- "liftreader" _ "(" _ params:LiftReaderParams _ ")" _ {
+
+    return SourceJob{Type:LIFTREADER,OperateOn:LiftReadJob{params:params.(LiftReader)}},nil
+}
+
+LiftReaderParams <-ip:Ip? _ "," _ streamName:StreamName _ "," _ streamSubject:StreamSubject _ {
+    return LiftReader{Ip:ip.(string),StreamName:streamName.(string),StreamSubject:streamSubject.(string)},nil
 }
 
 
@@ -264,7 +228,7 @@ AggJobs <- CountAgg / MaxAgg / MinAgg / AvgAgg / SumAgg / ModeAgg
           / CovAgg / CorrAgg / PValueAgg
 
 //all aggregator related jobs
-CountAgg <- alias:EqAliasG _ "count(" _ args:FilterMulti? _ ")"{
+CountAgg <- alias:EqAliasG? _ "count(" _ args:FilterMulti? _ ")"{
     name,filter,err := parseAggArgs(alias,args)
     if err !=nil{
     return nil,err
@@ -846,6 +810,19 @@ String_Type1 <- '"' ( !EscapedChar . / '\\' EscapeSequence )* '"' {
 
         return cast.GetStringValue(str), nil
 }
+
+Ip <- (DecimalDigit/SpecialChar)+{
+return string(c.text),nil
+}
+
+StreamName<-(Word /SpecialChar)+{
+return string(c.text),nil
+}
+
+StreamSubject <- (Word / SpecialChar)+{
+return string(c.text),nil
+}
+SpecialChar <-[-._:]
 
 EscapedChar <- [\x00-\x1f"\\]
 

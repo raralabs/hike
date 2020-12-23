@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/raralabs/canal/ext/transforms"
 	"github.com/raralabs/canal/ext/transforms/joinUsingHshMap"
+	"strconv"
+	"strings"
+	"time"
 
 	//"github.com/raralabs/canal/ext/transforms"
 	"os"
@@ -361,13 +364,13 @@ func getTransformExecutor(stg newPeg.TransformJob)pipeline.Executor{
 		rightFields := condition.RightFields
 		switch stgContent.Type{
 		case "INNER":
-			exec,_=transforms.NewJoinProcessor("innerjoin",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec=transforms.NewJoinProcessor("innerjoin",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
 			exec.SetName("innerjoin")
 		case "LEFTOUTER":
-			exec,_=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
 			exec.SetName("leftouterjoin")
 		case "RIGHTOUTER":
-			exec,_=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
+			exec=transforms.NewJoinProcessor("leftouter",leftFields,rightFields,selFields,joinUsingHshMap.INNER,joinUsingHshMap.INN,"path1","path2")
 			exec.SetName("rightouterjoin")
 		}
 
@@ -421,6 +424,17 @@ func getSourceExecutor(stg newPeg.SourceJob)pipeline.Executor{
 		log.Printf("[INFO] Generating %d fake data", numData)
 		exec = canalSrc.NewFaker(numData, nil)
 		exec.SetName("fake")
+
+	case newPeg.LIFTREADER:
+		params := stg.OperateOn.(newPeg.LiftReader)
+		fullIp :=params.Ip
+		splittedIp := strings.Split(fullIp,":")
+		ip:= splittedIp[0]+":"
+		port,_ := strconv.Atoi(splittedIp[1])
+		streamName := params.StreamName
+		//streamSubject := params.StreamSubject
+		exec = canalSrc.NewLiftBridgeReader(streamName,canalSrc.RECENT,time.Now(),int64(1),ip,port)
+		exec.SetName("LiftBridgeReader")
 	}
 	return exec
 }

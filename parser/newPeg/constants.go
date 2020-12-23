@@ -6,6 +6,7 @@ const(
 	FILEJOB	src = iota+1
 	FAKEJOB
 	BRANCHJOB
+	LIFTREADER
 	SECSOURCE
 )
 
@@ -14,7 +15,6 @@ type trns uint8
 const(
 	AGGJOB trns = iota +1
 	DOJOB
-	MAPJOB
 	JOINJOB
 )
 

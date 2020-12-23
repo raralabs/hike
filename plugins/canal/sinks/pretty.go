@@ -23,7 +23,6 @@ type PrettyPrint struct {
 	tw          table.Writer
 	maxRows     uint64
 	header      []string
-
 	batch *agg.Aggregator
 	done  func(m message.Msg, proc pipeline.IProcessorForExecutor)
 }
@@ -44,7 +43,6 @@ func NewPrettyPrinter(w io.Writer, maxRows uint64, header ...string) *PrettyPrin
 
 func (cw *PrettyPrint) Execute(m pipeline.MsgPod, proc pipeline.IProcessorForExecutor) bool {
 
-	//fmt.Println(m.Content(), m.PrevContent())
 	if cw.firstRecord {
 		cntnt := m.Msg.Content()
 

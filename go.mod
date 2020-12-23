@@ -22,7 +22,7 @@ require (
 	github.com/mna/pigeon v1.0.0 // indirect
 	github.com/peterh/liner v1.2.0
 	github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03 // indirect
-	github.com/raralabs/canal v0.0.0-20201125091710-538f82f9893d
+	github.com/raralabs/canal v0.0.0-20201222052609-0d3dfb60b9e9
 	github.com/raralabs/go-wm v0.0.0-20200726153622-2d0ad5f9de6d
 	github.com/spenczar/tdigest v2.1.0+incompatible // indirect
 	github.com/stretchr/objx v0.2.0 // indirect

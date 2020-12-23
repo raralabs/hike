@@ -39,6 +39,10 @@ type JoinNodeJob struct{
 
 }
 
+type LiftReadJob struct{
+	params LiftReader
+}
+
 //type SinkJob struct {
 //	Type string
 //	Args interface{}

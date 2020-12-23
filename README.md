@@ -10,7 +10,7 @@ A CLI for data exploration and visualization
     want Execute(pipeline.MsgPod, pipeline.IProcessorForExecutor) bool
       
     solution
-    upgrade canalgo get -u github.com/raralabs/canal.git
+    upgrade canal go get -u github.com/raralabs/canal
   
  2. during package upgrade:
       
@@ -18,7 +18,7 @@ A CLI for data exploration and visualization
     status 124 error ; terminal prompts disabled
     
     solution
-    go env -w GOPRIVATE=github.com/raralabs/canal.git
+    go env -w GOPRIVATE=github.com/raralabs/canal
       
   
 ### USE
